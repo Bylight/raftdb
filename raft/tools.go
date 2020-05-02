@@ -29,6 +29,15 @@ func encodeCmd(cmd interface{}) []byte {
     return encCmd
 }
 
+// 向缓存为 1 的信道发送一个值，保证其不阻塞
+func safeSend(ch chan bool) {
+    select {
+    case <-ch: // 如果存在，则忽略原先信道中的值
+    default:
+    }
+    ch <- true
+}
+
 // 将 byte 数组解码为 cmd
 func decodeCmd(data []byte) interface{} {
     if data == nil || len(data) < 1 { // empty data

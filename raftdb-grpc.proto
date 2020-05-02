@@ -1,0 +1,41 @@
+syntax = "proto3";
+package raftdb;
+
+option go_package = ".;raftdb";
+
+message GetArgs {
+  bytes key = 1;
+  int64 seq = 2;
+}
+
+message GetReply {
+  bytes value = 1;
+  bool wrong_leader = 2;
+}
+
+message PutArgs {
+  bytes key = 1;
+  bytes value = 2;
+  int64 seq = 3;
+  string cid = 4;
+}
+
+message PutReply {
+  bool wrong_leader = 1;
+}
+
+message DeleteArgs {
+  bytes key = 1;
+  int64 seq = 2;
+  string cid = 3;
+}
+
+message DeleteReply {
+  bool wrong_leader = 1;
+}
+
+service RaftDBService {
+  rpc Get(GetArgs) returns (GetReply);
+  rpc Put(PutArgs) returns (PutReply);
+  rpc Delete(DeleteArgs) returns (DeleteReply);
+}

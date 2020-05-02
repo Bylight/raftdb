@@ -5,6 +5,7 @@ import (
     "encoding/gob"
     "log"
     "sync"
+    "sync/atomic"
     "time"
 )
 
@@ -22,7 +23,9 @@ type Raft struct {
     me string // this peer's index into peers[]
     persist *Persist
     state State
+    dead int32
     // notify channel
+    killCh chan bool
     applyCh chan ApplyMsg
     // timer
     heartbeatTimer *time.Timer
@@ -139,7 +142,7 @@ func (rf *Raft) readPersistState(data []byte) {
     var lastIncludedTerm int64
     if dec.Decode(&logs) != nil || dec.Decode(&currTerm) != nil || dec.Decode(&votedFor) != nil ||
         dec.Decode(&lastIncludedIndex) != nil || dec.Decode(&lastIncludedTerm) != nil {
-        DPrintf("[DecodingError]: peer[%v][%v] decode error", rf.me, rf.currTerm)
+        log.Fatalf("[DecodingError]: peer[%v][%v] decode error", rf.me, rf.currTerm)
     } else {
         rf.logs = logs
         rf.currTerm = currTerm
@@ -209,6 +212,17 @@ func (rf *Raft) beLeader() {
     }
 }
 
+func (rf *Raft) Kill() {
+    atomic.StoreInt32(&rf.dead, 1)
+    safeSend(rf.killCh)
+    close(rf.killCh)
+}
+
+func (rf *Raft) Killed() bool {
+    z := atomic.LoadInt32(&rf.dead)
+    return z == 1
+}
+
 // Make 创建一个新的 raft 节点，供 server 调用
 func Make(peers map[string]*RaftServiceClient, me string,
     persist *Persist, applyCh chan ApplyMsg) *Raft {
@@ -218,9 +232,11 @@ func Make(peers map[string]*RaftServiceClient, me string,
     rf.persist = persist
     rf.me = me
     rf.state = Follower
+    rf.dead = 0
 
     // notify channel
     rf.applyCh = applyCh
+    rf.killCh = make(chan bool, 1)
     // timer
     rf.heartbeatTimer = time.NewTimer(HeartbeatRPCTimeout * time.Millisecond)
     rf.electionTimer = time.NewTimer(getRandElectionTimeout())
@@ -259,8 +275,8 @@ func Make(peers map[string]*RaftServiceClient, me string,
 func (rf *Raft) periodicRequestVote() {
     for {
         select {
-        // case <-rf.killCh:
-        //     return
+        case <-rf.killCh:
+            return
         // start election
         case <-rf.electionTimer.C:
             rf.mu.Lock()
@@ -282,8 +298,8 @@ func (rf *Raft) periodicRequestVote() {
 func (rf *Raft) periodicAppendEntries()  {
     for {
         select {
-        // case <-rf.killCh:
-        //     return
+        case <-rf.killCh:
+            return
         // send heartbeat in parallel
         case <-rf.heartbeatTimer.C:
             rf.mu.Lock()
