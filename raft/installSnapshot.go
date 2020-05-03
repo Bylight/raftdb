@@ -115,3 +115,30 @@ func (rf *Raft) doInstallSnapshotTo(peerAddr string) {
     // 尝试更新 commitIndex
     rf.updateCommitIndex()
 }
+
+// 令 raft 节点进行日志压缩
+// rf.mu 需要等待 apply 结束
+func (rf *Raft) LogCompaction(snapshot []byte, lastIncludedIndex int64) {
+    rf.mu.Lock()
+    defer rf.mu.Unlock()
+
+    if lastIncludedIndex <= rf.lastIncludedIndex {
+        log.Fatalf("[ErrLogCompaction] peer %v has already compact", rf.me)
+        return
+    }
+
+    // 丢弃已经 snapshot 的 log
+    rf.logs = rf.logs[rf.getCurrIndex(lastIncludedIndex):]
+    rf.lastIncludedIndex = lastIncludedIndex
+    rf.lastIncludedTerm = rf.logs[0].Term
+    // 更新完 lastIncludedIndex，要判断是否同步更新 lastApplied 和 commitIndex
+    if rf.lastApplied < rf.lastIncludedIndex {
+        rf.lastApplied = rf.lastIncludedIndex
+    }
+    if rf.commitIndex < rf.lastIncludedIndex {
+        rf.commitIndex = rf.lastIncludedIndex
+    }
+
+    rf.saveStateAndSnapshot(snapshot)
+    DPrintf("[LogCompactionComplete] peer: %v, state: %v, rf.lastIncludedIndex %v, logLen %v", rf.me, rf.state, rf.lastIncludedIndex)
+}

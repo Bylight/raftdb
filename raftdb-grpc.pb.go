@@ -29,6 +29,142 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
+type Op_Type int32
+
+const (
+	Op_GET    Op_Type = 0
+	Op_PUT    Op_Type = 1
+	Op_DELETE Op_Type = 2
+)
+
+// Enum value maps for Op_Type.
+var (
+	Op_Type_name = map[int32]string{
+		0: "GET",
+		1: "PUT",
+		2: "DELETE",
+	}
+	Op_Type_value = map[string]int32{
+		"GET":    0,
+		"PUT":    1,
+		"DELETE": 2,
+	}
+)
+
+func (x Op_Type) Enum() *Op_Type {
+	p := new(Op_Type)
+	*p = x
+	return p
+}
+
+func (x Op_Type) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Op_Type) Descriptor() protoreflect.EnumDescriptor {
+	return file_raftdb_grpc_proto_enumTypes[0].Descriptor()
+}
+
+func (Op_Type) Type() protoreflect.EnumType {
+	return &file_raftdb_grpc_proto_enumTypes[0]
+}
+
+func (x Op_Type) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Op_Type.Descriptor instead.
+func (Op_Type) EnumDescriptor() ([]byte, []int) {
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{0, 0}
+}
+
+type Op struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key   []byte  `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value []byte  `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Cid   string  `protobuf:"bytes,3,opt,name=cid,proto3" json:"cid,omitempty"`
+	Seq   int64   `protobuf:"varint,4,opt,name=seq,proto3" json:"seq,omitempty"`
+	Err   string  `protobuf:"bytes,5,opt,name=err,proto3" json:"err,omitempty"`
+	Type  Op_Type `protobuf:"varint,6,opt,name=type,proto3,enum=raftdb.Op_Type" json:"type,omitempty"`
+}
+
+func (x *Op) Reset() {
+	*x = Op{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_raftdb_grpc_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Op) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Op) ProtoMessage() {}
+
+func (x *Op) ProtoReflect() protoreflect.Message {
+	mi := &file_raftdb_grpc_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Op.ProtoReflect.Descriptor instead.
+func (*Op) Descriptor() ([]byte, []int) {
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Op) GetKey() []byte {
+	if x != nil {
+		return x.Key
+	}
+	return nil
+}
+
+func (x *Op) GetValue() []byte {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *Op) GetCid() string {
+	if x != nil {
+		return x.Cid
+	}
+	return ""
+}
+
+func (x *Op) GetSeq() int64 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *Op) GetErr() string {
+	if x != nil {
+		return x.Err
+	}
+	return ""
+}
+
+func (x *Op) GetType() Op_Type {
+	if x != nil {
+		return x.Type
+	}
+	return Op_GET
+}
+
 type GetArgs struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -41,7 +177,7 @@ type GetArgs struct {
 func (x *GetArgs) Reset() {
 	*x = GetArgs{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[0]
+		mi := &file_raftdb_grpc_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -54,7 +190,7 @@ func (x *GetArgs) String() string {
 func (*GetArgs) ProtoMessage() {}
 
 func (x *GetArgs) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[0]
+	mi := &file_raftdb_grpc_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -67,7 +203,7 @@ func (x *GetArgs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetArgs.ProtoReflect.Descriptor instead.
 func (*GetArgs) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{0}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetArgs) GetKey() []byte {
@@ -96,7 +232,7 @@ type GetReply struct {
 func (x *GetReply) Reset() {
 	*x = GetReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[1]
+		mi := &file_raftdb_grpc_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -109,7 +245,7 @@ func (x *GetReply) String() string {
 func (*GetReply) ProtoMessage() {}
 
 func (x *GetReply) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[1]
+	mi := &file_raftdb_grpc_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +258,7 @@ func (x *GetReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetReply.ProtoReflect.Descriptor instead.
 func (*GetReply) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{1}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetReply) GetValue() []byte {
@@ -153,7 +289,7 @@ type PutArgs struct {
 func (x *PutArgs) Reset() {
 	*x = PutArgs{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[2]
+		mi := &file_raftdb_grpc_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -166,7 +302,7 @@ func (x *PutArgs) String() string {
 func (*PutArgs) ProtoMessage() {}
 
 func (x *PutArgs) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[2]
+	mi := &file_raftdb_grpc_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -179,7 +315,7 @@ func (x *PutArgs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutArgs.ProtoReflect.Descriptor instead.
 func (*PutArgs) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{2}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PutArgs) GetKey() []byte {
@@ -221,7 +357,7 @@ type PutReply struct {
 func (x *PutReply) Reset() {
 	*x = PutReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[3]
+		mi := &file_raftdb_grpc_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -234,7 +370,7 @@ func (x *PutReply) String() string {
 func (*PutReply) ProtoMessage() {}
 
 func (x *PutReply) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[3]
+	mi := &file_raftdb_grpc_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +383,7 @@ func (x *PutReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutReply.ProtoReflect.Descriptor instead.
 func (*PutReply) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{3}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PutReply) GetWrongLeader() bool {
@@ -270,7 +406,7 @@ type DeleteArgs struct {
 func (x *DeleteArgs) Reset() {
 	*x = DeleteArgs{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[4]
+		mi := &file_raftdb_grpc_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -283,7 +419,7 @@ func (x *DeleteArgs) String() string {
 func (*DeleteArgs) ProtoMessage() {}
 
 func (x *DeleteArgs) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[4]
+	mi := &file_raftdb_grpc_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +432,7 @@ func (x *DeleteArgs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteArgs.ProtoReflect.Descriptor instead.
 func (*DeleteArgs) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{4}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DeleteArgs) GetKey() []byte {
@@ -331,7 +467,7 @@ type DeleteReply struct {
 func (x *DeleteReply) Reset() {
 	*x = DeleteReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_raftdb_grpc_proto_msgTypes[5]
+		mi := &file_raftdb_grpc_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -344,7 +480,7 @@ func (x *DeleteReply) String() string {
 func (*DeleteReply) ProtoMessage() {}
 
 func (x *DeleteReply) ProtoReflect() protoreflect.Message {
-	mi := &file_raftdb_grpc_proto_msgTypes[5]
+	mi := &file_raftdb_grpc_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +493,7 @@ func (x *DeleteReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteReply.ProtoReflect.Descriptor instead.
 func (*DeleteReply) Descriptor() ([]byte, []int) {
-	return file_raftdb_grpc_proto_rawDescGZIP(), []int{5}
+	return file_raftdb_grpc_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteReply) GetWrongLeader() bool {
@@ -371,7 +507,18 @@ var File_raftdb_grpc_proto protoreflect.FileDescriptor
 
 var file_raftdb_grpc_proto_rawDesc = []byte{
 	0x0a, 0x11, 0x72, 0x61, 0x66, 0x74, 0x64, 0x62, 0x2d, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x12, 0x06, 0x72, 0x61, 0x66, 0x74, 0x64, 0x62, 0x22, 0x2d, 0x0a, 0x07, 0x47,
+	0x6f, 0x74, 0x6f, 0x12, 0x06, 0x72, 0x61, 0x66, 0x74, 0x64, 0x62, 0x22, 0xad, 0x01, 0x0a, 0x02,
+	0x4f, 0x70, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x63, 0x69,
+	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x69, 0x64, 0x12, 0x10, 0x0a, 0x03,
+	0x73, 0x65, 0x71, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x73, 0x65, 0x71, 0x12, 0x10,
+	0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72,
+	0x12, 0x23, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0f,
+	0x2e, 0x72, 0x61, 0x66, 0x74, 0x64, 0x62, 0x2e, 0x4f, 0x70, 0x2e, 0x54, 0x79, 0x70, 0x65, 0x52,
+	0x04, 0x74, 0x79, 0x70, 0x65, 0x22, 0x24, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x07, 0x0a,
+	0x03, 0x47, 0x45, 0x54, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x50, 0x55, 0x54, 0x10, 0x01, 0x12,
+	0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x02, 0x22, 0x2d, 0x0a, 0x07, 0x47,
 	0x65, 0x74, 0x41, 0x72, 0x67, 0x73, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x65, 0x71, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x73, 0x65, 0x71, 0x22, 0x43, 0x0a, 0x08, 0x47, 0x65,
@@ -420,27 +567,31 @@ func file_raftdb_grpc_proto_rawDescGZIP() []byte {
 	return file_raftdb_grpc_proto_rawDescData
 }
 
-var file_raftdb_grpc_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_raftdb_grpc_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_raftdb_grpc_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_raftdb_grpc_proto_goTypes = []interface{}{
-	(*GetArgs)(nil),     // 0: raftdb.GetArgs
-	(*GetReply)(nil),    // 1: raftdb.GetReply
-	(*PutArgs)(nil),     // 2: raftdb.PutArgs
-	(*PutReply)(nil),    // 3: raftdb.PutReply
-	(*DeleteArgs)(nil),  // 4: raftdb.DeleteArgs
-	(*DeleteReply)(nil), // 5: raftdb.DeleteReply
+	(Op_Type)(0),        // 0: raftdb.Op.Type
+	(*Op)(nil),          // 1: raftdb.Op
+	(*GetArgs)(nil),     // 2: raftdb.GetArgs
+	(*GetReply)(nil),    // 3: raftdb.GetReply
+	(*PutArgs)(nil),     // 4: raftdb.PutArgs
+	(*PutReply)(nil),    // 5: raftdb.PutReply
+	(*DeleteArgs)(nil),  // 6: raftdb.DeleteArgs
+	(*DeleteReply)(nil), // 7: raftdb.DeleteReply
 }
 var file_raftdb_grpc_proto_depIdxs = []int32{
-	0, // 0: raftdb.RaftDBService.Get:input_type -> raftdb.GetArgs
-	2, // 1: raftdb.RaftDBService.Put:input_type -> raftdb.PutArgs
-	4, // 2: raftdb.RaftDBService.Delete:input_type -> raftdb.DeleteArgs
-	1, // 3: raftdb.RaftDBService.Get:output_type -> raftdb.GetReply
-	3, // 4: raftdb.RaftDBService.Put:output_type -> raftdb.PutReply
-	5, // 5: raftdb.RaftDBService.Delete:output_type -> raftdb.DeleteReply
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: raftdb.Op.type:type_name -> raftdb.Op.Type
+	2, // 1: raftdb.RaftDBService.Get:input_type -> raftdb.GetArgs
+	4, // 2: raftdb.RaftDBService.Put:input_type -> raftdb.PutArgs
+	6, // 3: raftdb.RaftDBService.Delete:input_type -> raftdb.DeleteArgs
+	3, // 4: raftdb.RaftDBService.Get:output_type -> raftdb.GetReply
+	5, // 5: raftdb.RaftDBService.Put:output_type -> raftdb.PutReply
+	7, // 6: raftdb.RaftDBService.Delete:output_type -> raftdb.DeleteReply
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_raftdb_grpc_proto_init() }
@@ -450,7 +601,7 @@ func file_raftdb_grpc_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_raftdb_grpc_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetArgs); i {
+			switch v := v.(*Op); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -462,7 +613,7 @@ func file_raftdb_grpc_proto_init() {
 			}
 		}
 		file_raftdb_grpc_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetReply); i {
+			switch v := v.(*GetArgs); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -474,7 +625,7 @@ func file_raftdb_grpc_proto_init() {
 			}
 		}
 		file_raftdb_grpc_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutArgs); i {
+			switch v := v.(*GetReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -486,7 +637,7 @@ func file_raftdb_grpc_proto_init() {
 			}
 		}
 		file_raftdb_grpc_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutReply); i {
+			switch v := v.(*PutArgs); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -498,7 +649,7 @@ func file_raftdb_grpc_proto_init() {
 			}
 		}
 		file_raftdb_grpc_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteArgs); i {
+			switch v := v.(*PutReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -510,6 +661,18 @@ func file_raftdb_grpc_proto_init() {
 			}
 		}
 		file_raftdb_grpc_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteArgs); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_raftdb_grpc_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteReply); i {
 			case 0:
 				return &v.state
@@ -527,13 +690,14 @@ func file_raftdb_grpc_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_raftdb_grpc_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   6,
+			NumEnums:      1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_raftdb_grpc_proto_goTypes,
 		DependencyIndexes: file_raftdb_grpc_proto_depIdxs,
+		EnumInfos:         file_raftdb_grpc_proto_enumTypes,
 		MessageInfos:      file_raftdb_grpc_proto_msgTypes,
 	}.Build()
 	File_raftdb_grpc_proto = out.File

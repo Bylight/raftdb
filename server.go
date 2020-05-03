@@ -4,11 +4,13 @@ import (
     "bytes"
     "encoding/gob"
     "github.com/Bylight/raftdb/raft"
-    "github.com/syndtr/goleveldb/leveldb"
     "log"
     "sync"
     "sync/atomic"
 )
+
+const RpcCallTimeout = 10000
+const Debug = false
 
 // server 作为 raftdb 中与 client 进行直接交互的存在，属于一个“中间层”的存在
 // 将绑定一个 raft 节点，对于所有来自 Client 的指令，都会发送到对应 raft 节点；在 raft 已经确认 apply 后，才与实际的数据库进行交互，并将结果返回给 Client
@@ -21,9 +23,10 @@ type DBServer struct {
     applyCh chan raft.ApplyMsg
     killCh chan bool
     snapshotThreshold int // 快照阈值
+    snapshotCount int
     dead int32
 
-    db *leveldb.DB
+    db Store
     cid2seq map[string]int64 // 记录每个 Client 发送的最大命令序列号
     agreeChMap map[int64]chan Op // 通知 server 向 raft 发起操作请求
 }
@@ -68,7 +71,7 @@ func (dbs *DBServer) waitApply() {
             if msg.CmdValid {
                 dbs.opBaseCmd(msg)
             } else {
-                dbs.restoreFromSnapshot(msg.Snapshot)
+                dbs.decodeSnapshot(msg.Snapshot)
             }
         }
     }
@@ -88,21 +91,34 @@ func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
     safeSendOp(dbs.getAgreeCh(msg.CmdIndex), op)
 }
 
-// TODO
 // 尝试令 Raft 节点进行日志压缩
 func (dbs *DBServer) checkRaftLogCompaction(lastIncludedIndex int64) {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
 
+    // -1 表示不启用日志压缩
+    if dbs.snapshotThreshold == -1 {
+        return
+    }
+    snapshotCount := dbs.snapshotCount
+    // 抢占锁需要额外时间, 故需要提早进行检测
+    if snapshotCount < dbs.snapshotThreshold * 9 / 10 {
+        return
+    }
+    snapshot, err := dbs.encodeSnapshot()
+    if err != nil {
+        log.Fatalf("[ErrSnapshotInServer]")
+        return
+    }
+    go dbs.rf.LogCompaction(snapshot, lastIncludedIndex)
 }
 
-// TODO
 // 令 server 恢复到 snapshot 的状态
-func (dbs *DBServer) restoreFromSnapshot(data []byte) {
+func (dbs *DBServer) decodeSnapshot(data []byte) {
     r := bytes.NewBuffer(data)
     dec := gob.NewDecoder(r)
 
-    var snapshot *leveldb.Snapshot
+    var snapshot []byte
     if err := dec.Decode(&snapshot); err != nil {
         log.Fatalf("[DecodingError] server %v decode snapshot error[%v]", dbs.me, err)
     }
@@ -113,20 +129,48 @@ func (dbs *DBServer) restoreFromSnapshot(data []byte) {
 
     dbs.mu.Lock()
     dbs.cid2seq = cid2seq
-    dbs.restoreDb(snapshot)
+    dbs.db.RestoreFromSnapshot(snapshot)
     dbs.mu.Unlock()
 }
 
-// TODO
 // 对数据库执行具体操作
 // 该方法应为唯一能对数据库进行操作的函数
 func (dbs *DBServer) doOperation(op *Op) {
+    dbs.mu.Lock()
+    defer dbs.mu.Unlock()
+    var err error
+    // 除非 Get 请求，否则只处理最新的请求
+    if op.Type == Op_GET || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
+        switch op.Type {
+        case Op_GET:
+            op.Value, err = dbs.db.Get(op.Key)
+        case Op_PUT:
+            dbs.cid2seq[op.Cid] = op.Seq
+            err = dbs.db.Put(op.Key, op.Value)
+        case Op_DELETE:
+            dbs.cid2seq[op.Cid] = op.Seq
+            err = dbs.db.Delete(op.Key)
+        }
+    }
+    if err != nil {
+        op.Err = err.Error()
+        log.Fatalf("[FailedOp] op %v, err %v", op, err)
+    }
 
+    // 每次操作完，count++
+    dbs.snapshotCount++
 }
 
+// TODO
 func StartDBServer(
     servers []*raft.RaftServiceClient, me string, persist *raft.Persist, snapshotThreshold int,
     ) *DBServer {
 
 
+    return nil
+}
+
+// TODO
+func StartDBServerByConfig(config *Config) *DBServer {
+    return nil
 }
