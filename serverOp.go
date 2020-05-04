@@ -43,7 +43,6 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         // 错误要报告给 client
         if res.Err != "" {
             err = errors.New(res.Err)
-            DPrintf("[ErrGetInServer] key %v, err %v, reply %v", op.Key, err, reply)
         }
         reply.Value = res.Value
         // 只有 WrongLeader 为 false, client 才接受这个结果

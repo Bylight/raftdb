@@ -158,11 +158,13 @@ func (dbs *DBServer) doOperation(op *Op) {
         }
         // 每次操作完，count++
         dbs.snapshotCount++
-        DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
-    }
-    if err != nil {
-        op.Err = err.Error()
-        log.Printf("[FailedOpErr] op %v, err %v", op, err)
+
+        if err != nil {
+            op.Err = err.Error()
+            log.Printf("[FailedOpErr] op %v, err %v", op, err)
+        } else {
+            DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
+        }
     }
 }
 

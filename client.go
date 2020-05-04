@@ -78,14 +78,15 @@ func (client *DefaultClient) Put(key, value []byte) error {
             return err
         }
         reply, err := server.Put(context.Background(), args)
+        if err != nil {
+            DPrintf("[ErrPutInClient] err %v", err)
+            return err
+        }
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             client.currLeader = (client.currLeader + 1) % len(client.servers)
             continue
-        }
-        if err != nil {
-            return err
         }
         return err
     }
@@ -106,14 +107,15 @@ func (client *DefaultClient) Delete(key []byte) error {
             return err
         }
         reply, err := server.Delete(context.Background(), args)
+        if err != nil {
+            DPrintf("[ErrDeleteInClient] err %v", err)
+            return err
+        }
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             client.currLeader = (client.currLeader + 1) % len(client.servers)
             continue
-        }
-        if err != nil {
-            return err
         }
         return err
     }
