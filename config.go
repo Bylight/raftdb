@@ -10,8 +10,8 @@ import (
 
 // TODO
 const DefaultStoreFile = "./db"
-const DefaultRaftServicePort = "7086"
-const DefaultDbServicePort = "7087"
+const DefaultRaftServicePort = ":7086"
+const DefaultDbServicePort = ":7087"
 const DefaultSnapshotThreshold = 10000
 
 type Config interface {
@@ -86,7 +86,7 @@ func (config *DefaultConfig) initRaftClients() {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
         client := raft.NewRaftServiceClient(conn)
-        clients[v + ":" +config.RaftServicePort] = &client
+        clients[v + config.RaftServicePort] = &client
     }
     config.Clients = clients
 }

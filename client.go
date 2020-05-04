@@ -35,7 +35,7 @@ func GetDefaultClient() *DefaultClient {
     }
     client.serverAddr = addr.ClientAddr
     client.currLeader = 0
-    client.cid = addr.Me + ":" + DefaultDbServicePort
+    client.cid = addr.Me + DefaultDbServicePort
     client.initRaftDBClients(addr.ClientAddr)
     return client
 }
@@ -136,7 +136,7 @@ func (client *DefaultClient) initRaftDBClients(servers []string) {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
         client := NewRaftDBServiceClient(conn)
-        clients[v + ":" + DefaultDbServicePort] = &client
+        clients[v + DefaultDbServicePort] = &client
     }
     client.servers = clients
 }
