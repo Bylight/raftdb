@@ -9,7 +9,7 @@ func main() {
     addr := raftdb.PeerAddr{
         Me:         "106.52.184.128",
         ClientAddr: []string{
-            "172.16.41.138",
+            "116.62.27.142",
             "106.52.184.128",
         },
     }
