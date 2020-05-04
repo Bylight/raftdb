@@ -13,7 +13,7 @@ const (
     HeartbeatRPCTimeout = 1000
 )
 
-var Debug bool // for debug
+const Debug bool = true // for debug
 
 func (state State) String() string {
     switch state {

@@ -12,7 +12,7 @@ import (
 const DefaultStoreFile = "./db"
 const DefaultRaftServicePort = ":7086"
 const DefaultDbServicePort = ":7087"
-const DefaultSnapshotThreshold = 10000
+const DefaultSnapshotThreshold = -1
 
 type Config interface {
     InitRaftDB()

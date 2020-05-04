@@ -1,6 +1,9 @@
 package main
 
-import "github.com/Bylight/raftdb"
+import (
+    "github.com/Bylight/raftdb"
+    "log"
+)
 
 func main() {
     addr := raftdb.PeerAddr{
@@ -12,5 +15,6 @@ func main() {
     }
     config := raftdb.GetDefaultConfig(addr)
     config.InitRaftDB()
+    log.Println("InitComplete")
 }
 

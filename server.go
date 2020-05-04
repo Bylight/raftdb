@@ -10,7 +10,7 @@ import (
 )
 
 const RpcCallTimeout = 10000
-const Debug = false
+const Debug = true
 
 // server 作为 raftdb 中与 client 进行直接交互的存在，属于一个“中间层”的存在
 // 将绑定一个 raft 节点，对于所有来自 DefaultClient 的指令，都会发送到对应 raft 节点；在 raft 已经确认 apply 后，才与实际的数据库进行交互，并将结果返回给 DefaultClient
@@ -97,7 +97,7 @@ func (dbs *DBServer) checkRaftLogCompaction(lastIncludedIndex int64) {
     defer dbs.mu.Unlock()
 
     // -1 表示不启用日志压缩
-    if dbs.snapshotThreshold == -1 {
+    if dbs.snapshotThreshold < 0 {
         return
     }
     snapshotCount := dbs.snapshotCount
