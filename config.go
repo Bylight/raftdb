@@ -16,11 +16,10 @@ const DefaultSnapshotThreshold = -1
 
 type Config interface {
     InitRaftDB()
-    GetRaftClients() map[string]*raft.RaftServiceClient
     initRaftClients()
-    initRaftServer()
-    initRaftDBServer()
-    initDBServer() *DBServer
+    initRaftServer(raft *raft.Raft)
+    initRaftDBServer(dbServer *DBServer)
+    initDB() *DBServer
 }
 
 // DefaultConfig 用于保存 raftdb 配置
@@ -63,9 +62,9 @@ func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
 
 func (config *DefaultConfig) InitRaftDB() {
     config.initRaftClients()
-    config.initRaftServer()
-    config.initRaftDBServer()
-    config.initDBServer()
+    dbServer := config.initDB()
+    config.initRaftDBServer(dbServer)
+    config.initRaftServer(dbServer.rf)
 }
 
 // 启动多个 Raft DefaultClient
@@ -89,35 +88,39 @@ func (config *DefaultConfig) initRaftClients() {
         clients[v + config.RaftServicePort] = &client
     }
     config.Clients = clients
+    log.Println("[InitRaftDB] init raft clients")
 }
 
 // 启动一个 raft server, 循环响应 raft client 的请求
 // 只应调用一次
-func (config *DefaultConfig) initRaftServer() {
+func (config *DefaultConfig) initRaftServer(raftServer *raft.Raft) {
     listener, err := net.Listen("tcp", config.RaftServicePort)
     if err != nil {
         panic(fmt.Sprintf("[ErrInit] Error in initRaftServer: %v", err))
     }
     // 创建一个 grpc 服务器对象
     server := grpc.NewServer()
-    raft.RegisterRaftServiceServer(server, new(raft.Raft))
+    raft.RegisterRaftServiceServer(server, raftServer)
     // 开启服务端
     server.Serve(listener)
+    log.Println("[InitRaftDB] init raft server")
 }
 
 // 启动一个 raftdb server, 循环响应 raftdb client 的请求
 // 只应调用一次
-func (config *DefaultConfig) initRaftDBServer() {
+func (config *DefaultConfig) initRaftDBServer(dbServer *DBServer) {
     listener, err := net.Listen("tcp", config.DbServicePort)
     if err != nil {
         panic(fmt.Sprintf("[ErrInit] Error in initRaftDBServer: %v", err))
     }
     server := grpc.NewServer()
-    RegisterRaftDBServiceServer(server, new(DBServer))
+    RegisterRaftDBServiceServer(server, dbServer)
+    // TODO: 是否 使用 goroutine
     server.Serve(listener)
+    log.Println("[InitRaftDB] init raftDB server")
 }
 
 // 初始化 DBServer
-func (config *DefaultConfig) initDBServer() *DBServer {
+func (config *DefaultConfig) initDB() *DBServer {
     return startDBServer(config.Clients, config.Me, config.Persist, config.SnapshotThreshold, config.Db)
 }

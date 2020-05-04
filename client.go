@@ -3,11 +3,11 @@ package raftdb
 import (
     "fmt"
     "google.golang.org/grpc"
+    "log"
     "sync/atomic"
 )
 
 type Client interface {
-    InitDBClient(servers []string)
     Get(key []byte) (value []byte, err error)
     Put(key, value []byte) error
     Delete(key []byte) error
@@ -24,24 +24,13 @@ type DefaultClient struct {
 }
 
 // 供外部接口调用, 返回一个可用的 DefaultClient
-func GetDefaultClient() *DefaultClient {
+func GetDefaultClient(addr PeerAddr) *DefaultClient {
     client := new(DefaultClient)
-    addr := PeerAddr{
-        Me:         "192.168.1.5",
-        ClientAddr: []string{
-            "172.16.41.138",
-            "192.168.1.5",
-        },
-    }
     client.serverAddr = addr.ClientAddr
     client.currLeader = 0
     client.cid = addr.Me + DefaultDbServicePort
     client.initRaftDBClients(addr.ClientAddr)
     return client
-}
-
-func (client *DefaultClient) InitDBClient(addr []string) {
-    client.InitDBClient(addr)
 }
 
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
@@ -70,6 +59,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         return reply.Value, err
     }
 }
+
 func (client *DefaultClient) Put(key, value []byte) error {
     DPrintf("[Client:Put] key: %v", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
@@ -139,4 +129,5 @@ func (client *DefaultClient) initRaftDBClients(servers []string) {
         clients[v + DefaultDbServicePort] = &client
     }
     client.servers = clients
+    log.Println("[InitInClient] init raftDB client")
 }

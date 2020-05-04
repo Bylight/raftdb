@@ -15,6 +15,6 @@ func main() {
     }
     config := raftdb.GetDefaultConfig(addr)
     config.InitRaftDB()
-    log.Println("InitComplete")
+    log.Println("InitRaftDB")
 }
 
