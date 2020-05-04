@@ -29,7 +29,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
     ch := dbs.getAgreeCh(index)
     select {
     case <- time.After(RpcCallTimeout * time.Millisecond):
-        DPrintf("[GetTimeoutInServer] op %v", op)
+        DPrintf("[GetTimeoutInServer] op key %s", op.Value)
     case res := <-ch:
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
@@ -72,7 +72,7 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
     ch := dbs.getAgreeCh(index)
     select {
     case <- time.After(RpcCallTimeout * time.Millisecond):
-        DPrintf("[PutTimeoutInServer] op %v", op)
+        DPrintf("[PutTimeoutInServer] op key %s value %s", op.Key, op.Value)
     case res := <-ch:
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
@@ -113,7 +113,7 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
     ch := dbs.getAgreeCh(index)
     select {
     case <- time.After(RpcCallTimeout * time.Millisecond):
-        DPrintf("[DeleteTimeoutInServer] op %v", op)
+        DPrintf("[DeleteTimeoutInServer] op key %s", op.Value)
     case res := <-ch:
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)

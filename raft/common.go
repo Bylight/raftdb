@@ -10,7 +10,7 @@ const (
 
 const (
     NullVotedFor = "_"
-    HeartbeatRPCTimeout = 1000
+    HeartbeatRPCTimeout = 200
 )
 
 const Debug bool = true // for debug
