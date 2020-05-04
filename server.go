@@ -13,7 +13,7 @@ const RpcCallTimeout = 10000
 const Debug = false
 
 // server 作为 raftdb 中与 client 进行直接交互的存在，属于一个“中间层”的存在
-// 将绑定一个 raft 节点，对于所有来自 Client 的指令，都会发送到对应 raft 节点；在 raft 已经确认 apply 后，才与实际的数据库进行交互，并将结果返回给 Client
+// 将绑定一个 raft 节点，对于所有来自 DefaultClient 的指令，都会发送到对应 raft 节点；在 raft 已经确认 apply 后，才与实际的数据库进行交互，并将结果返回给 DefaultClient
 
 type DBServer struct {
     mu sync.Mutex
@@ -27,7 +27,7 @@ type DBServer struct {
     dead int32
 
     db Store
-    cid2seq map[string]int64 // 记录每个 Client 发送的最大命令序列号
+    cid2seq map[string]int64 // 记录每个 DefaultClient 发送的最大命令序列号
     agreeChMap map[int64]chan Op // 通知 server 向 raft 发起操作请求
 }
 
@@ -47,7 +47,7 @@ func (dbs *DBServer) Killed() bool {
 }
 
 // 获取一个 server 内部传递 Op 的信道, index 为 raft start 该 Op 后返回的 index
-// 收到来自 Client 的 Op 请求后, 监听该信道
+// 收到来自 DefaultClient 的 Op 请求后, 监听该信道
 // 直到 server 收到 raft apply 成功的 cmd 并成功执行 Op, 然后从该信道获取操作结果
 func (dbs *DBServer) getAgreeCh(index int64) chan Op {
     dbs.mu.Lock()
@@ -161,16 +161,30 @@ func (dbs *DBServer) doOperation(op *Op) {
     dbs.snapshotCount++
 }
 
-// TODO
-func StartDBServer(
-    servers []*raft.RaftServiceClient, me string, persist *raft.Persist, snapshotThreshold int,
+// 完成一个 DBSServer 的启动
+func startDBServer(
+    servers map[string]*raft.RaftServiceClient, me string, persist *raft.Persist, snapshotThreshold int, db Store,
     ) *DBServer {
+    dbs := new(DBServer)
+
+    // 来自 config
+    dbs.me = me
+    dbs.snapshotThreshold = snapshotThreshold
+    dbs.db = db
+    dbs.persist = persist
 
 
-    return nil
-}
+    dbs.applyCh = make(chan raft.ApplyMsg)
+    dbs.killCh = make(chan bool, 1)
+    dbs.cid2seq = make(map[string]int64)
+    dbs.agreeChMap = make(map[int64]chan Op)
+    go dbs.waitApply()
+    if snapshot := persist.ReadSnapshot(); snapshot != nil {
+        dbs.decodeSnapshot(snapshot)
+    }
 
-// TODO
-func StartDBServerByConfig(config *Config) *DBServer {
-    return nil
+    // 来自 config
+    dbs.rf = raft.Make(servers, me, persist, dbs.applyCh)
+
+    return dbs
 }
