@@ -35,7 +35,7 @@ func GetDefaultClient(addr PeerAddr) *DefaultClient {
 }
 
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
-    DPrintf("[Client:Get] key: %v", key)
+    DPrintf("[Client:Get] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     for {
@@ -50,7 +50,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         reply, err := server.Get(context.Background(), args)
         if err != nil {
             DPrintf("[ErrGetInClient] err %v", err)
-            return reply.Value, err
+            return nil, err
         }
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
@@ -63,7 +63,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
 }
 
 func (client *DefaultClient) Put(key, value []byte) error {
-    DPrintf("[Client:Put] key: %v", key)
+    DPrintf("[Client:Put] key: %s, value: %s", key, value)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     for {
@@ -93,7 +93,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
 }
 
 func (client *DefaultClient) Delete(key []byte) error {
-    DPrintf("[Client:Delete] key: %v", key)
+    DPrintf("[Client:Delete] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     for {
