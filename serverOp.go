@@ -36,7 +36,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
         if !isSameOp(op, res) {
             return reply, err
         }
@@ -82,7 +82,7 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
         if !isSameOp(op, res) {
             return reply, err
         }
@@ -126,7 +126,7 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
         if !isSameOp(op, res) {
             return reply, err
         }

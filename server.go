@@ -160,8 +160,8 @@ func (dbs *DBServer) doOperation(op *Op) {
         dbs.snapshotCount++
 
         if err != nil {
+            DPrintf("[FailedOpErr] op %v, err %v", op, err)
             op.Err = err.Error()
-            log.Printf("[FailedOpErr] op %v, err %v", op, err)
         } else {
             DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
         }
