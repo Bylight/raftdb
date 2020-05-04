@@ -77,6 +77,7 @@ func (rf *Raft) AppendEntries(context context.Context, args *AppendEntriesArgs) 
         if int64(len(rf.logs)) <= currIndex {
             rf.logs = append(rf.logs, args.Entries[currIndex-currPrevLogIndex-1:]...)
         }
+        DPrintf("[LogAppendedInRaftClient] client %v", rf.me)
     }
     rf.saveState()
 
@@ -137,7 +138,6 @@ func (rf *Raft) doAppendEntriesTo(peerAddr string) {
         rf.doInstallSnapshotTo(peerAddr)
         return
     }
-    DPrintf("[SendAppendEntries]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
     args := new(AppendEntriesArgs)
     args.Term = rf.currTerm
     args.LeaderId = rf.me
@@ -152,6 +152,11 @@ func (rf *Raft) doAppendEntriesTo(peerAddr string) {
         args.Entries = []*LogEntry{}
     } else {
         args.Entries = rf.logs[rf.getCurrIndex(rf.nextIndex[peerAddr]):]
+    }
+    if len(args.Entries) > 0 {
+        DPrintf("[SendAppendEntries]%v[%v] to %v, args.PrevLogIndex %v, len(args.Entries) %v", rf.me, rf.currTerm, peerAddr, args.PrevLogIndex, len(args.Entries))
+    } else {
+        DPrintf("[SendHeartbeat]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
     }
     rf.mu.Unlock()
 
