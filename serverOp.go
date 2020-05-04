@@ -19,6 +19,8 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
     reply.WrongLeader = true
     bts, err := encodeOp(op)
     if err != nil {
+        // 如果编码错误, 则不应继续尝试重发
+        reply.WrongLeader = false
         return reply, err
     }
     index, _, isLeader := dbs.rf.Start(bts)
@@ -62,6 +64,8 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
     reply.WrongLeader = true
     bts, err := encodeOp(op)
     if err != nil {
+        // 如果编码错误, 则不应继续尝试重发
+        reply.WrongLeader = false
         return reply, err
     }
     index, _, isLeader := dbs.rf.Start(bts)
@@ -103,6 +107,8 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
     reply.WrongLeader = true
     bts, err := encodeOp(op)
     if err != nil {
+        // 如果编码错误, 则不应继续尝试重发
+        reply.WrongLeader = false
         return reply, err
     }
     index, _, isLeader := dbs.rf.Start(bts)

@@ -89,7 +89,7 @@ func (rf *Raft) doInstallSnapshotTo(peerAddr string) {
     reply := &InstallSnapshotReply{}
     err := rf.sendInstallSnapshot(peerAddr,context.Background(), args, reply)
     if err != nil {
-        log.Fatalln(err)
+        log.Println(err)
     }
 
     rf.mu.Lock()
@@ -123,7 +123,7 @@ func (rf *Raft) LogCompaction(snapshot []byte, lastIncludedIndex int64) {
     defer rf.mu.Unlock()
 
     if lastIncludedIndex <= rf.lastIncludedIndex {
-        log.Fatalf("[ErrLogCompaction] peer %v has already compact", rf.me)
+        log.Printf("[ErrLogCompaction] peer %v has already compact", rf.me)
         return
     }
 

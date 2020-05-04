@@ -48,7 +48,7 @@ func (ddb *DefaultDB) GetSnapshot() ([]byte, error) {
     err = enc.Encode(snapshot)
     if err != nil {
         snapshot.Release()
-        log.Fatalf("[DBError] db get snapshot error[%v]", err)
+        log.Printf("[DBSnapshotError] db get snapshot error[%v]", err)
         return nil, err
     }
     return w.Bytes(), err
@@ -57,7 +57,7 @@ func (ddb *DefaultDB) GetSnapshot() ([]byte, error) {
 // TODO
 func (ddb *DefaultDB) RestoreFromSnapshot(data []byte) error {
     if data == nil || len(data) < 1 { // bootstrap without any state?
-        log.Fatalln("[DBError] db restore from empty-snapshot")
+        log.Printf("[DBError] db restore from empty-snapshot")
         return nil
     }
     r := bytes.NewBuffer(data)

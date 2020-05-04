@@ -24,7 +24,7 @@ func encodeCmd(cmd interface{}) []byte {
     enc := gob.NewEncoder(w)
     err := enc.Encode(cmd)
     if err != nil {
-        log.Fatalf("[EncodingError]: encode cmd %v error[%v]", cmd, err)
+        log.Printf("[EncodingError]: encode cmd %v error[%v]", cmd, err)
     }
     encCmd := w.Bytes()
     return encCmd
@@ -50,7 +50,7 @@ func decodeCmd(data []byte) interface{} {
     var cmd interface{}
     err := dec.Decode(&cmd)
     if err != nil {
-        log.Fatalf("[DecodingError]: decode cmd %v error[%v]", cmd, err)
+        log.Printf("[DecodingError]: decode cmd %v error[%v]", cmd, err)
     }
     return cmd
 }

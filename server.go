@@ -81,12 +81,12 @@ func (dbs *DBServer) waitApply() {
 func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
     bts, ok := msg.Cmd.([]byte)
     if !ok {
-        log.Fatalf("[ErrorCmdTypeInServer] server %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
+        log.Printf("[ErrorCmdTypeInServer] server %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
         return
     }
     op, err := decodeOp(bts)
     if err != nil {
-        log.Fatalf(err.Error())
+        log.Printf(err.Error())
         return
     }
     dbs.doOperation(&op)
@@ -112,7 +112,7 @@ func (dbs *DBServer) checkRaftLogCompaction(lastIncludedIndex int64) {
     }
     snapshot, err := dbs.encodeSnapshot()
     if err != nil {
-        log.Fatalf("[ErrSnapshotInServer]")
+        log.Printf("[ErrSnapshotInServer]")
         return
     }
     go dbs.rf.LogCompaction(snapshot, lastIncludedIndex)
@@ -125,11 +125,11 @@ func (dbs *DBServer) decodeSnapshot(data []byte) {
 
     var snapshot []byte
     if err := dec.Decode(&snapshot); err != nil {
-        log.Fatalf("[DecodingError] server %v decode snapshot error[%v]", dbs.me, err)
+        log.Printf("[DecodingErr] server %v decode snapshot error[%v]", dbs.me, err)
     }
     var cid2seq map[string]int64
     if err := dec.Decode(&cid2seq); err != nil {
-        log.Fatalf("[DecodingError] server %v decode cid2seq error[%v]", dbs.me, err)
+        log.Printf("[DecodingErr] server %v decode cid2seq error[%v]", dbs.me, err)
     }
 
     dbs.mu.Lock()
@@ -162,7 +162,7 @@ func (dbs *DBServer) doOperation(op *Op) {
     }
     if err != nil {
         op.Err = err.Error()
-        log.Fatalf("[FailedOp] op %v, err %v", op, err)
+        log.Printf("[FailedOpErr] op %v, err %v", op, err)
     }
 }
 

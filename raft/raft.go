@@ -97,7 +97,7 @@ func (rf *Raft) saveState() {
     logs := rf.logs
     err := enc.Encode(logs)
     if err != nil {
-        log.Fatalf("[EncodingError]: peer[%v][%v] encode logs error[%v]", rf.me, rf.currTerm, err)
+        log.Printf("[EncodingError]: peer[%v][%v] encode logs error[%v]", rf.me, rf.currTerm, err)
     }
     currTerm := rf.currTerm
     err = enc.Encode(currTerm)
@@ -107,17 +107,17 @@ func (rf *Raft) saveState() {
     votedFor := rf.votedFor
     err = enc.Encode(votedFor)
     if err != nil {
-        log.Fatalf("[EncodingError]: peer[%v][%v] encode votedFor error[%v]", rf.me, rf.currTerm, err)
+        log.Printf("[EncodingError]: peer[%v][%v] encode votedFor error[%v]", rf.me, rf.currTerm, err)
     }
     lastIncludedIndex := rf.lastIncludedIndex
     err = enc.Encode(lastIncludedIndex)
     if err != nil {
-        log.Fatalf("[EncodingError]: peer[%v][%v] encode lastIncludedIndex error[%v]", rf.me, rf.currTerm, err)
+        log.Printf("[EncodingError]: peer[%v][%v] encode lastIncludedIndex error[%v]", rf.me, rf.currTerm, err)
     }
     lastIncludedTerm := rf.lastIncludedTerm
     err = enc.Encode(lastIncludedTerm)
     if err != nil {
-        log.Fatalf("[EncodingError]: peer[%v][%v] encode lastIncludedTerm error[%v]", rf.me, rf.currTerm, err)
+        log.Printf("[EncodingError]: peer[%v][%v] encode lastIncludedTerm error[%v]", rf.me, rf.currTerm, err)
     }
 
     data := w.Bytes()
@@ -148,7 +148,7 @@ func (rf *Raft) readPersistState(data []byte) {
     var lastIncludedTerm int64
     if dec.Decode(&logs) != nil || dec.Decode(&currTerm) != nil || dec.Decode(&votedFor) != nil ||
         dec.Decode(&lastIncludedIndex) != nil || dec.Decode(&lastIncludedTerm) != nil {
-        log.Fatalf("[DecodingError]: peer[%v][%v] decode error", rf.me, rf.currTerm)
+        log.Printf("[DecodingError]: peer[%v][%v] decode error", rf.me, rf.currTerm)
     } else {
         rf.logs = logs
         rf.currTerm = currTerm

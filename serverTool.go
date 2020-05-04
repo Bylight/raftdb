@@ -69,7 +69,7 @@ func (dbs *DBServer) encodeSnapshot() ([]byte, error) {
 
     snapshot, err := dbs.db.GetSnapshot()
     if err != nil {
-        log.Fatalf("[DBError] db get snapshot error[%v]", err)
+        log.Printf("[DBError] db get snapshot error[%v]", err)
         return nil, err
     }
 
@@ -80,12 +80,12 @@ func (dbs *DBServer) encodeSnapshot() ([]byte, error) {
 
     err = enc.Encode(snapshot)
     if err != nil {
-        log.Fatalf("[EncodingError] server %v encode snapshot error[%v]", me, err)
+        log.Printf("[EncodingError] server %v encode snapshot error[%v]", me, err)
         return nil, err
     }
     err = enc.Encode(cid2seq)
     if err != nil {
-        log.Fatalf("[EncodingError] server %v encode cid2seq error[%v]", me, err)
+        log.Printf("[EncodingError] server %v encode cid2seq error[%v]", me, err)
         return nil, err
     }
 
@@ -98,7 +98,7 @@ func encodeOp(op Op) ([]byte, error) {
     enc := gob.NewEncoder(w)
     err := enc.Encode(op)
     if err != nil {
-        log.Fatalf("[EncodingErrorInServer]: encode op %v error[%v]", op, err)
+        log.Printf("[EncodingErrorInServer]: encode op %v error[%v]", op, err)
         return nil, err
     }
     encCmd := w.Bytes()
@@ -115,7 +115,7 @@ func decodeOp(data []byte) (Op, error) {
     dec := gob.NewDecoder(r)
     err := dec.Decode(&op)
     if err != nil {
-        log.Fatalf("[DecodingError]: decode op %v error[%v]", data, err)
+        log.Printf("[DecodingError]: decode op %v error[%v]", data, err)
     }
     return op, nil
 }
