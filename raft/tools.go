@@ -105,6 +105,7 @@ func (rf *Raft) getCurrIndex(realIndex int64) int64 {
 func (rf *Raft) updateCommitIndex() {
     majorityMatchIndex := getMajorityAgreeIndex(rf.matchIndex)
     if majorityMatchIndex > rf.commitIndex && rf.logs[rf.getCurrIndex(majorityMatchIndex)].Term == rf.currTerm {
+        DPrintf("[CommitIndexUpdated] peer %v[%v], state %s, commitIndex from %v to %v", rf.me, rf.currTerm, rf.state, rf.commitIndex, majorityMatchIndex)
         rf.commitIndex = majorityMatchIndex
         rf.doApplyEntry()
     }

@@ -81,6 +81,7 @@ func (rf *Raft) Start(cmd interface{}) (index int64, term int64, isLeader bool) 
         Cmd:  rec,
     }
     rf.logs = append(rf.logs, entry)
+    DPrintf("[StartInRaft] start new cmd in index %v", index)
 
     rf.saveState()
     rf.doAppendEntries()
@@ -171,6 +172,7 @@ func (rf *Raft) doApplyEntry() {
             Cmd:      cmd,
             CmdIndex: rf.lastApplied,
         }
+        DPrintf("[ApplyInRaft] Apply new cmd in index %v", rf.lastApplied)
     }
 }
 
