@@ -20,6 +20,7 @@ message Op {
 message GetArgs {
   bytes key = 1;
   int64 seq = 2;
+  string cid = 3;
 }
 
 message GetReply {

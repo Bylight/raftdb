@@ -144,18 +144,17 @@ func (dbs *DBServer) doOperation(op *Op) {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
     var err error
-    // 除非 Get 请求，否则只处理最新的请求
-    if op.Type == Op_GET || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
+    // 只处理最新的请求
+    if !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
         switch op.Type {
         case Op_GET:
             op.Value, err = dbs.db.Get(op.Key)
         case Op_PUT:
-            dbs.cid2seq[op.Cid] = op.Seq
             err = dbs.db.Put(op.Key, op.Value)
         case Op_DELETE:
-            dbs.cid2seq[op.Cid] = op.Seq
             err = dbs.db.Delete(op.Key)
         }
+        dbs.cid2seq[op.Cid] = op.Seq
         // 每次操作完，count++
         dbs.snapshotCount++
 

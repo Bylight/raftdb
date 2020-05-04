@@ -9,11 +9,12 @@ import (
 func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) {
     var err error
     reply := new(GetReply)
-    // Get 请求是幂等的, 可以重复, 不需要记录 cid
+    // Get 请求是幂等的, 可以重复, 不需要记录 cid; 更新: 但是如果不保证 get 操作的线性执行, 会读到旧的结果
     op := Op{
         Key:   args.Key,
         Seq:   args.Seq,
         Type:  Op_GET,
+        Cid: args.Cid,
         Err:   "",
     }
     reply.WrongLeader = true

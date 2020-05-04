@@ -42,6 +42,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         args := &GetArgs{
             Key: key,
             Seq: curSeq,
+            Cid: client.cid,
         }
         server, err := client.getDBClient(client.serverAddr[client.currLeader])
         if err != nil {
