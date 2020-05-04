@@ -6,6 +6,7 @@ import (
     "google.golang.org/grpc"
     "log"
     "sync/atomic"
+    "time"
 )
 
 type Client interface {
@@ -29,7 +30,10 @@ func GetDefaultClient(addr PeerAddr) *DefaultClient {
     client := new(DefaultClient)
     client.serverAddr = addr.ClientAddr
     client.currLeader = 0
-    client.cid = addr.Me + DefaultDbServicePort
+    // TODO
+    // 问题: Client 断开重连后，如何保证生成一样的 id, 或是说保持 seq 最新?
+    // 当前解决方式, 令 Client 的 id 带上时间戳, 但这种情况下, raftdb 需要定时重启, 防止 cid2seq 占用过多内存
+    client.cid = addr.Me + DefaultDbServicePort + fmt.Sprint(time.Now().Unix())
     client.initRaftDBClients(addr.ClientAddr)
     return client
 }
