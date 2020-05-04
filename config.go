@@ -80,12 +80,12 @@ func (config *DefaultConfig) initRaftClients() {
         if v == me {
             continue
         }
-        conn, err := grpc.Dial(v, grpc.WithInsecure())
+        conn, err := grpc.Dial(v + DefaultRaftServicePort, grpc.WithInsecure())
         if err != nil {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
         client := raft.NewRaftServiceClient(conn)
-        clients[v + config.RaftServicePort] = &client
+        clients[v] = &client
     }
     config.Clients = clients
     log.Println("[InitRaftDB] init raft clients")

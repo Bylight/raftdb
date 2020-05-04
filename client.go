@@ -20,7 +20,7 @@ type DefaultClient struct {
     currLeader int // 当前 Leader 的 ip 地址
     cid string // ip:port
     seq int64
-    servers map[string]*RaftDBServiceClient // raftdb 的客户端
+    servers map[string]*RaftDBServiceClient // raftdb 的客户端, 使用 ipAddr 作为 key
     serverAddr []string
 }
 
@@ -122,12 +122,12 @@ func (client *DefaultClient) Delete(key []byte) error {
 func (client *DefaultClient) initRaftDBClients(servers []string) {
     clients := make(map[string]*RaftDBServiceClient)
     for _, v := range servers {
-        conn, err := grpc.Dial(v, grpc.WithInsecure())
+        conn, err := grpc.Dial(v + DefaultDbServicePort, grpc.WithInsecure())
         if err != nil {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
         client := NewRaftDBServiceClient(conn)
-        clients[v + DefaultDbServicePort] = &client
+        clients[v] = &client
     }
     client.servers = clients
     log.Println("[InitInClient] init raftDB client")

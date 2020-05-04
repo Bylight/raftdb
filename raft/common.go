@@ -9,7 +9,7 @@ const (
 )
 
 const (
-    NullVotedFor = "_:_"
+    NullVotedFor = "_"
     HeartbeatRPCTimeout = 1000
 )
 

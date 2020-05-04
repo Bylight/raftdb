@@ -19,7 +19,7 @@ type ApplyMsg struct {
 // Raft 定义一个 Raft 节点
 type Raft struct {
     mu sync.Mutex
-    peers map[string]*RaftServiceClient // 每个 raft peer 都是一个 server，使用 "addr:port" 作为key
+    peers map[string]*RaftServiceClient // 每个 raft peer 都是一个 server，使用 "ipAddr" 作为key
     me string // this peer's index into peers[]
     persist *Persist
     state State
