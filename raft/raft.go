@@ -77,7 +77,7 @@ func (rf *Raft) Start(cmd interface{}) (index int64, term int64, isLeader bool) 
     term = rf.currTerm
     // 压缩 cmd
     entry := &LogEntry{
-        Term: index,
+        Term: term,
         Cmd:  rec,
     }
     rf.logs = append(rf.logs, entry)

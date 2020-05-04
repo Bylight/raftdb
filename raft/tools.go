@@ -104,10 +104,13 @@ func (rf *Raft) getCurrIndex(realIndex int64) int64 {
 // 由调用者加锁
 func (rf *Raft) updateCommitIndex() {
     majorityMatchIndex := getMajorityAgreeIndex(rf.matchIndex)
+    DPrintf("[TryToUpdateCommitIndex] leader %v[%v], commitIndex %v, majority %v", rf.me, rf.currTerm, rf.commitIndex, majorityMatchIndex)
     if majorityMatchIndex > rf.commitIndex && rf.logs[rf.getCurrIndex(majorityMatchIndex)].Term == rf.currTerm {
         DPrintf("[CommitIndexUpdated] peer %v[%v], state %s, commitIndex from %v to %v", rf.me, rf.currTerm, rf.state, rf.commitIndex, majorityMatchIndex)
         rf.commitIndex = majorityMatchIndex
         rf.doApplyEntry()
+    } else {
+        DPrintf("[FailUpdateCommitIndex] majority's term %v, rf.term %v", rf.logs[rf.getCurrIndex(majorityMatchIndex)].Term, rf.currTerm)
     }
 }
 
