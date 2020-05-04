@@ -63,8 +63,8 @@ func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
 func (config *DefaultConfig) InitRaftDB() {
     config.initRaftClients()
     dbServer := config.initDB()
-    go config.initRaftDBServer(dbServer)
     go config.initRaftServer(dbServer.rf)
+    config.initRaftDBServer(dbServer)
 }
 
 // 启动多个 Raft DefaultClient
