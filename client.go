@@ -45,7 +45,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         }
         server, err := client.getDBClient(client.serverAddr[client.currLeader])
         if err != nil {
-            panic(err.Error())
+            return nil, err
         }
         reply, err := server.Get(context.Background(), args)
         // client 只能向 leader 发送请求
@@ -74,7 +74,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
         }
         server, err := client.getDBClient(client.serverAddr[client.currLeader])
         if err != nil {
-            panic(err.Error())
+            return err
         }
         reply, err := server.Put(context.Background(), args)
         // client 只能向 leader 发送请求
@@ -102,7 +102,7 @@ func (client *DefaultClient) Delete(key []byte) error {
         }
         server, err := client.getDBClient(client.serverAddr[client.currLeader])
         if err != nil {
-            panic(err.Error())
+            return err
         }
         reply, err := server.Delete(context.Background(), args)
         // client 只能向 leader 发送请求
