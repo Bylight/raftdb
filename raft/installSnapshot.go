@@ -10,7 +10,7 @@ func (rf *Raft) InstallSnapshot(ctx context.Context, args *InstallSnapshotArgs) 
     rf.mu.Lock()
     defer rf.mu.Unlock()
     reply := new(InstallSnapshotReply)
-    DPrintf("[InstallSnapshot] %v[%v] to %v[%v]", args.LeaderId, args.Term, rf.me, rf.currTerm)
+    DPrintf("[RecInstallSnapshot] %v[%v] to %v[%v]", args.LeaderId, args.Term, rf.me, rf.currTerm)
     reply.Term = rf.currTerm
 
     if args.Term < rf.currTerm {
@@ -72,7 +72,7 @@ func (rf *Raft) sendInstallSnapshot(server string, ctx context.Context, args *In
 // doInstallSnapshotTo 向指定节点发送 InstallSnapshot RPC
 // 调用前已获取 rf.mu.Lock()
 func (rf *Raft) doInstallSnapshotTo(peerAddr string) {
-    DPrintf("[SendAppendEntries]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
+    DPrintf("[SendInstallSnapshot] %v[%v] to %v", rf.me, rf.currTerm, peerAddr)
     if rf.state != Leader {
         rf.mu.Unlock()
         return

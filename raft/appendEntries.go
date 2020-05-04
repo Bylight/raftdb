@@ -10,7 +10,7 @@ func (rf *Raft) AppendEntries(context context.Context, args *AppendEntriesArgs) 
     rf.mu.Lock()
     defer rf.mu.Unlock()
 
-    DPrintf("[RecAppendEntries]%v[%v] to %v[%v]", args.LeaderId, args.Term, rf.me, rf.currTerm)
+    DPrintf("[RecAppendEntries] %v[%v] to %v[%v]", args.LeaderId, args.Term, rf.me, rf.currTerm)
     reply := new(AppendEntriesReply)
     reply.Term = rf.currTerm
 

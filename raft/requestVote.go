@@ -11,7 +11,7 @@ func (rf *Raft) RequestVote(ctx context.Context, args *RequestVoteArgs) (*Reques
     defer rf.mu.Unlock()
     defer rf.saveState()
 
-    DPrintf("[RecRequestVote]%v[%v] to %v[%v]", args.CandidateId, args.Term, rf.me, rf.currTerm)
+    DPrintf("[RecRequestVote] %v[%v] to %v[%v]", args.CandidateId, args.Term, rf.me, rf.currTerm)
     reply := new(RequestVoteReply)
 
     // candidate's term < currentTerm, vote denied
@@ -94,7 +94,7 @@ func (rf *Raft) doRequestVote() {
                 LastLogTerm:   lastLogTerm,
             }
             reply := new(RequestVoteReply)
-            DPrintf("[SendAppendEntries]%v[%v] to %v", candidateId, term, peerAddr)
+            DPrintf("[SendRequestVote] %v[%v] to %v", candidateId, term, peerAddr)
 
             // 发送投票
             err := rf.sendRequestVote(peerAddr, context.Background(), args, reply)
