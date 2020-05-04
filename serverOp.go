@@ -36,12 +36,14 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
         if !isSameOp(op, res) {
             return reply, err
         }
         // 错误要报告给 client
         if res.Err != "" {
             err = errors.New(res.Err)
+            DPrintf("[ErrGetInServer] key %v, err %v, reply %v", op.Key, err, reply)
         }
         reply.Value = res.Value
         // 只有 WrongLeader 为 false, client 才接受这个结果
@@ -81,6 +83,7 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
         if !isSameOp(op, res) {
             return reply, err
         }
@@ -124,13 +127,13 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
         if !isSameOp(op, res) {
             return reply, err
         }
         // 错误要报告给 client
         if res.Err != "" {
             err = errors.New(res.Err)
-            DPrintf("[ErrGetInServer] key %v, err %v, reply %v", op.Key, err, reply)
         }
         // 只有 WrongLeader 为 false, client 才接受这个结果
         reply.WrongLeader = false

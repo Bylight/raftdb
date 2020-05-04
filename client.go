@@ -48,14 +48,15 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
+        if err != nil {
+            DPrintf("[ErrGetInClient] err %v", err)
+            return reply.Value, err
+        }
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             client.currLeader = (client.currLeader + 1) % len(client.servers)
             continue
-        }
-        if err != nil {
-            return reply.Value, err
         }
         return reply.Value, err
     }
