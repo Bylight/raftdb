@@ -7,8 +7,8 @@ import (
 
 func main() {
     addr := raftdb.PeerAddr{
-        Me:         "106.52.184.128",
-        // Me:         "116.62.27.142",
+        Me:         "106.52.184.128", // tencent
+        // Me:         "116.62.27.142", // ali
         ClientAddr: []string{
             "116.62.27.142",
             "106.52.184.128",

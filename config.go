@@ -63,8 +63,8 @@ func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
 func (config *DefaultConfig) InitRaftDB() {
     config.initRaftClients()
     dbServer := config.initDB()
-    config.initRaftDBServer(dbServer)
-    config.initRaftServer(dbServer.rf)
+    go config.initRaftDBServer(dbServer)
+    go config.initRaftServer(dbServer.rf)
 }
 
 // 启动多个 Raft DefaultClient
@@ -115,7 +115,6 @@ func (config *DefaultConfig) initRaftDBServer(dbServer *DBServer) {
     }
     server := grpc.NewServer()
     RegisterRaftDBServiceServer(server, dbServer)
-    // TODO: 是否 使用 goroutine
     server.Serve(listener)
     log.Println("[InitRaftDB] init raftDB server")
 }

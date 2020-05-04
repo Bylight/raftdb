@@ -203,6 +203,7 @@ func (rf *Raft) changeStateTo(targetState State) {
 }
 
 func (rf *Raft) beLeader() {
+    DPrintf("[BeLeader] peer %v[%v]", rf.me, rf.currTerm)
     rf.doAppendEntries()
     rf.heartbeatTimer.Reset(HeartbeatRPCTimeout * time.Millisecond)
     // 初始化 Volatile State on Leader
