@@ -1,6 +1,7 @@
 package raftdb
 
 import (
+    "context"
     "fmt"
     "google.golang.org/grpc"
     "log"
@@ -46,7 +47,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         if err != nil {
             panic(err.Error())
         }
-        reply, err := server.Get(nil, args)
+        reply, err := server.Get(context.Background(), args)
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
@@ -75,7 +76,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
         if err != nil {
             panic(err.Error())
         }
-        reply, err := server.Put(nil, args)
+        reply, err := server.Put(context.Background(), args)
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
@@ -103,7 +104,7 @@ func (client *DefaultClient) Delete(key []byte) error {
         if err != nil {
             panic(err.Error())
         }
-        reply, err := server.Delete(nil, args)
+        reply, err := server.Delete(context.Background(), args)
         // client 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {

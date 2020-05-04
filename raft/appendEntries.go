@@ -156,7 +156,7 @@ func (rf *Raft) doAppendEntriesTo(peerAddr string) {
     rf.mu.Unlock()
 
     // 进行 RPC 调用
-    err := rf.sendAppendEntries(peerAddr, nil, args, reply)
+    err := rf.sendAppendEntries(peerAddr, context.Background(), args, reply)
     if err != nil {
         log.Fatalln(err)
     }

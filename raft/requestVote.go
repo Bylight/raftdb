@@ -97,7 +97,7 @@ func (rf *Raft) doRequestVote() {
             DPrintf("[SendAppendEntries]%v[%v] to %v", candidateId, term, peerAddr)
 
             // 发送投票
-            err := rf.sendRequestVote(peerAddr, nil, args, reply)
+            err := rf.sendRequestVote(peerAddr, context.Background(), args, reply)
             if err != nil {
 
             }

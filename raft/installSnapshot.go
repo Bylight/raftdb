@@ -87,7 +87,7 @@ func (rf *Raft) doInstallSnapshotTo(peerAddr string) {
     rf.mu.Unlock()
 
     reply := &InstallSnapshotReply{}
-    err := rf.sendInstallSnapshot(peerAddr,nil, args, reply)
+    err := rf.sendInstallSnapshot(peerAddr,context.Background(), args, reply)
     if err != nil {
         log.Fatalln(err)
     }
