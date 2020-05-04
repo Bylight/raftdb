@@ -79,9 +79,14 @@ func (dbs *DBServer) waitApply() {
 
 // server 根据来自 Raft 的 cmd 对数据库发起操作请求
 func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
-    op, ok := msg.Cmd.(Op)
+    bts, ok := msg.Cmd.([]byte)
     if !ok {
-        log.Fatalf("[ErrorCmd] server %v receive illeagl cmd: %v", dbs.me, msg.Cmd)
+        log.Fatalf("[ErrorCmdTypeInServer] server %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
+        return
+    }
+    op, err := decodeOp(bts)
+    if err != nil {
+        log.Fatalf(err.Error())
         return
     }
     dbs.doOperation(&op)
@@ -151,14 +156,14 @@ func (dbs *DBServer) doOperation(op *Op) {
             dbs.cid2seq[op.Cid] = op.Seq
             err = dbs.db.Delete(op.Key)
         }
+        // 每次操作完，count++
+        dbs.snapshotCount++
+        DPrintf("[OpDoneInServer] type %s, key %v, value %v", op.Type, op.Key, op.Value)
     }
     if err != nil {
         op.Err = err.Error()
         log.Fatalf("[FailedOp] op %v, err %v", op, err)
     }
-
-    // 每次操作完，count++
-    dbs.snapshotCount++
 }
 
 // 完成一个 DBSServer 的启动

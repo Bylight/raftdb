@@ -17,7 +17,11 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         Err:   "",
     }
     reply.WrongLeader = true
-    index, _, isLeader := dbs.rf.Start(op)
+    bts, err := encodeOp(op)
+    if err != nil {
+        return nil, err
+    }
+    index, _, isLeader := dbs.rf.Start(bts)
     if !isLeader {
         return reply, err
     }
@@ -56,7 +60,11 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
         Type:  Op_PUT,
     }
     reply.WrongLeader = true
-    index, _, isLeader := dbs.rf.Start(op)
+    bts, err := encodeOp(op)
+    if err != nil {
+        return nil, err
+    }
+    index, _, isLeader := dbs.rf.Start(bts)
     if !isLeader {
         return reply, err
     }
@@ -93,7 +101,11 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
         Type:  Op_DELETE,
     }
     reply.WrongLeader = true
-    index, _, isLeader := dbs.rf.Start(op)
+    bts, err := encodeOp(op)
+    if err != nil {
+        return nil, err
+    }
+    index, _, isLeader := dbs.rf.Start(bts)
     if !isLeader {
         return reply, err
     }

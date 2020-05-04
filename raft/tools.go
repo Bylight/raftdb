@@ -17,6 +17,7 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
     return
 }
 
+// deprecated
 // 将 cmd 压缩为 byte 数组
 func encodeCmd(cmd interface{}) []byte {
     w := new(bytes.Buffer)
@@ -38,6 +39,7 @@ func safeSend(ch chan bool) {
     ch <- true
 }
 
+// deprecated
 // 将 byte 数组解码为 cmd
 func decodeCmd(data []byte) interface{} {
     if data == nil || len(data) < 1 { // empty data

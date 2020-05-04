@@ -67,13 +67,18 @@ func (rf *Raft) Start(cmd interface{}) (index int64, term int64, isLeader bool) 
     if !isLeader {
         return index, term, isLeader
     }
+    rec, ok := cmd.([]byte)
+    if !ok {
+        log.Fatalf("[ErrStatrCmd] should start []bytes, receive %v", rec)
+        return index, term, isLeader
+    }
     // Leader 则将 cmd 新增至 logs
     index = rf.getRealLogLen()
     term = rf.currTerm
     // 压缩 cmd
     entry := &LogEntry{
         Term: index,
-        Cmd:  encodeCmd(cmd),
+        Cmd:  rec,
     }
     rf.logs = append(rf.logs, entry)
 
@@ -163,7 +168,7 @@ func (rf *Raft) doApplyEntry() {
         cmd := rf.logs[currApply].Cmd
         rf.applyCh <- ApplyMsg{
             CmdValid: true,
-            Cmd:      decodeCmd(cmd),
+            Cmd:      cmd,
             CmdIndex: rf.lastApplied,
         }
     }

@@ -3,6 +3,7 @@ package raftdb
 import (
     "bytes"
     "encoding/gob"
+    "errors"
     "log"
 )
 
@@ -89,4 +90,32 @@ func (dbs *DBServer) encodeSnapshot() ([]byte, error) {
     }
 
     return w.Bytes(), nil
+}
+
+// 将 op 压缩为 byte 数组
+func encodeOp(op Op) ([]byte, error) {
+    w := new(bytes.Buffer)
+    enc := gob.NewEncoder(w)
+    err := enc.Encode(op)
+    if err != nil {
+        log.Fatalf("[EncodingErrorInServer]: encode op %v error[%v]", op, err)
+        return nil, err
+    }
+    encCmd := w.Bytes()
+    return encCmd, nil
+}
+
+// 将 byte 数组解码为 op
+func decodeOp(data []byte) (Op, error) {
+    var op Op
+    if data == nil || len(data) < 1 { // empty data
+        return op, errors.New("[DecodeOpErrorInServer] decode nil data")
+    }
+    r := bytes.NewBuffer(data)
+    dec := gob.NewDecoder(r)
+    err := dec.Decode(&op)
+    if err != nil {
+        log.Fatalf("[DecodingError]: decode op %v error[%v]", data, err)
+    }
+    return op, nil
 }
