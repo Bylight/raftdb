@@ -102,8 +102,8 @@ func (config *DefaultConfig) initRaftServer(raftServer *raft.Raft) {
     server := grpc.NewServer()
     raft.RegisterRaftServiceServer(server, raftServer)
     // 开启服务端
-    server.Serve(listener)
     log.Println("[InitRaftDB] init raft server")
+    server.Serve(listener)
 }
 
 // 启动一个 raftdb server, 循环响应 raftdb client 的请求
@@ -115,8 +115,8 @@ func (config *DefaultConfig) initRaftDBServer(dbServer *DBServer) {
     }
     server := grpc.NewServer()
     RegisterRaftDBServiceServer(server, dbServer)
-    server.Serve(listener)
     log.Println("[InitRaftDB] init raftDB server")
+    server.Serve(listener)
 }
 
 // 初始化 DBServer

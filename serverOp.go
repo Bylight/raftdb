@@ -130,6 +130,7 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
         // 错误要报告给 client
         if res.Err != "" {
             err = errors.New(res.Err)
+            DPrintf("[ErrGetInServer] key %v, err %v, reply %v", op.Key, err, reply)
         }
         // 只有 WrongLeader 为 false, client 才接受这个结果
         reply.WrongLeader = false
