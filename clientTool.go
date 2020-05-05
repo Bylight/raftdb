@@ -9,3 +9,30 @@ func (client *DefaultClient) getDBClient(target string) (RaftDBServiceClient, er
     }
     return *res, nil
 }
+
+func (leaderCount *safeCurrLeader) safeGet() int {
+    leaderCount.mu.Lock()
+    defer leaderCount.mu.Unlock()
+    return leaderCount.currLeader
+}
+
+func (leaderCount *safeCurrLeader) safeAdd(i int) int {
+    leaderCount.mu.Lock()
+    defer leaderCount.mu.Unlock()
+    leaderCount.currLeader += i
+    return leaderCount.currLeader
+}
+
+func (leaderCount *safeCurrLeader) safeReduce(i int) int {
+    leaderCount.mu.Lock()
+    defer leaderCount.mu.Unlock()
+    leaderCount.currLeader -= i
+    return leaderCount.currLeader
+}
+
+func (leaderCount *safeCurrLeader) safeSet(i int) int {
+    leaderCount.mu.Lock()
+    defer leaderCount.mu.Unlock()
+    leaderCount.currLeader = i
+    return leaderCount.currLeader
+}
