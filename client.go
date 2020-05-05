@@ -59,6 +59,8 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         reply, err := server.Get(context.Background(), args)
         // 没有执行则直接重新发送
         if reply.Duplicated {
+            // 重新初始化序列号
+            curSeq = atomic.AddInt64(&client.seq, 1)
             continue
         }
         count++
