@@ -57,6 +57,10 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
         }
         reply, err := server.Get(context.Background(), args)
         if err != nil {
+            // 只读操作可直接重试
+            if err.Error() == DupReadOnlyOp {
+                continue
+            }
             DPrintf("[ErrGetInClient] err %v", err)
             return nil, err
         }

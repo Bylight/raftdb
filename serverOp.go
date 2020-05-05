@@ -6,7 +6,7 @@ import (
     "time"
 )
 
-// v1.3.0 Get 是只读请求, 无需写入日志, 在确认自己是 Leader 的情况下
+// Get 是只读请求, 无需写入日志, 在确认自己是 Leader 的情况下
 func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) {
     var err error
     reply := new(GetReply)
@@ -28,8 +28,10 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
     if op.Err != "" {
         err = errors.New(op.Err)
     }
+    if op.Err == DupReadOnlyOp {
+        return reply, err
+    }
     reply.Value = op.Value
-    // TODO: 返回前是否再一次进行校验？
     // 只有 WrongLeader 为 false, client 才接受这个结果
     reply.WrongLeader = false
     return reply, err

@@ -10,6 +10,7 @@ import (
 )
 
 const RpcCallTimeout = 10000
+const DupReadOnlyOp = "DupReadOnlyOp"
 const Debug = true
 
 // server 作为 raftdb 中与 client 进行直接交互的存在，属于一个“中间层”的存在
@@ -164,6 +165,9 @@ func (dbs *DBServer) doOperation(op *Op) {
         } else {
             DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
         }
+    // 重复的只读请求, 仅需重新执行
+    } else if op.Type == Op_GET {
+        op.Err = DupReadOnlyOp
     }
 }
 
