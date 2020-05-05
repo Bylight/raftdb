@@ -31,7 +31,6 @@ func GetDefaultClient(addr PeerAddr) *DefaultClient {
     client := new(DefaultClient)
     client.serverAddr = addr.ClientAddr
     client.currLeader = 0
-    // TODO
     // 问题: Client 断开重连后，如何保证生成一样的 id, 或是说保持 seq 最新?
     // 当前解决方式, 令 Client 的 id 带上时间戳, 但这种情况下, raftdb 需要定时重启, 防止 cid2seq 占用过多内存
     client.cid = addr.Me + DefaultDbServicePort + fmt.Sprint(time.Now().Unix())
@@ -45,6 +44,8 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     DPrintf("[Client:Get] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
+    // 即使出错, 也要尝试遍历各个节点, 这样节点意外宕机时才能保证系统可用
+    count := 0
     for {
         args := &GetArgs{
             Key: key,
@@ -56,12 +57,17 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
+        // 只读操作可直接重试
+        if err != nil && err.Error() == DupReadOnlyOp {
+            continue
+        }
+        count++
         if err != nil {
-            // 只读操作可直接重试
-            if err.Error() == DupReadOnlyOp {
+            log.Printf("[ErrGetInClient] addr %v, err %v", client.serverAddr[client.currLeader], err)
+            if count < len(client.servers) {
+                client.currLeader = (client.currLeader + 1) % len(client.servers)
                 continue
             }
-            DPrintf("[ErrGetInClient] err %v", err)
             return nil, err
         }
         // client 只能向 leader 发送请求
@@ -80,6 +86,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
     DPrintf("[Client:Put] key: %s, value: %s", key, value)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
+    count := 0
     for {
         args := &PutArgs{
             Key:   key,
@@ -92,8 +99,13 @@ func (client *DefaultClient) Put(key, value []byte) error {
             return err
         }
         reply, err := server.Put(context.Background(), args)
+        count++
         if err != nil {
-            DPrintf("[ErrPutInClient] err %v", err)
+            log.Printf("[ErrPutInClient] addr %v, err %v", client.serverAddr[client.currLeader], err)
+            if count < len(client.servers) {
+                client.currLeader = (client.currLeader + 1) % len(client.servers)
+                continue
+            }
             return err
         }
         // client 只能向 leader 发送请求
@@ -112,6 +124,7 @@ func (client *DefaultClient) Delete(key []byte) error {
     DPrintf("[Client:Delete] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
+    count := 0
     for {
         args := &DeleteArgs{
             Key: key,
@@ -123,8 +136,13 @@ func (client *DefaultClient) Delete(key []byte) error {
             return err
         }
         reply, err := server.Delete(context.Background(), args)
+        count++
         if err != nil {
-            DPrintf("[ErrDeleteInClient] err %v", err)
+            log.Printf("[ErrDeleteInClient] addr %v, err %v", client.serverAddr[client.currLeader], err)
+            if count < len(client.servers) {
+                client.currLeader = (client.currLeader + 1) % len(client.servers)
+                continue
+            }
             return err
         }
         // client 只能向 leader 发送请求
