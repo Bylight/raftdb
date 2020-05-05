@@ -56,6 +56,12 @@ func (rf *Raft) GetState() (currTerm int64, state State) {
     return currTerm, state
 }
 
+func (rf *Raft) GetIsLeader() bool {
+    rf.mu.Lock()
+    defer rf.mu.Unlock()
+    return rf.state == Leader
+}
+
 // 尝试令当前节点接受一个来自 Client 的 cmd
 func (rf *Raft) Start(cmd interface{}) (index int64, term int64, isLeader bool) {
     index = -1

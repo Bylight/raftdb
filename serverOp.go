@@ -6,6 +6,7 @@ import (
     "time"
 )
 
+// v1.3.0 Get 是只读请求, 无需写入日志, 在确认自己是 Leader 的情况下
 func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) {
     var err error
     reply := new(GetReply)
@@ -18,37 +19,19 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         Err:   "",
     }
     reply.WrongLeader = true
-    bts, err := encodeOp(op)
-    if err != nil {
-        // 如果编码错误, 则不应继续尝试重发
-        reply.WrongLeader = false
+    // Leader 才能保证数据是最新的
+    if isLeader := dbs.rf.GetIsLeader() ;!isLeader {
         return reply, err
     }
-    index, _, isLeader := dbs.rf.Start(bts)
-    if !isLeader {
-        return reply, err
+    dbs.doOperation(&op)
+    // 错误要报告给 client
+    if op.Err != "" {
+        err = errors.New(op.Err)
     }
-    // 等待操作结果
-    ch := dbs.getAgreeCh(index)
-    select {
-    case <- time.After(RpcCallTimeout * time.Millisecond):
-        DPrintf("[GetTimeoutInServer] op key %s", op.Value)
-    case res := <-ch:
-        dbs.mu.Lock()
-        delete(dbs.agreeChMap, index)
-        dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
-        if !isSameOp(op, res) {
-            return reply, err
-        }
-        // 错误要报告给 client
-        if res.Err != "" {
-            err = errors.New(res.Err)
-        }
-        reply.Value = res.Value
-        // 只有 WrongLeader 为 false, client 才接受这个结果
-        reply.WrongLeader = false
-    }
+    reply.Value = op.Value
+    // TODO: 返回前是否再一次进行校验？
+    // 只有 WrongLeader 为 false, client 才接受这个结果
+    reply.WrongLeader = false
     return reply, err
 }
 
