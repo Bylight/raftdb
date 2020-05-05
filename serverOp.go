@@ -3,6 +3,7 @@ package raftdb
 import (
     "context"
     "errors"
+    "fmt"
     "time"
 )
 
@@ -138,5 +139,26 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
         // 只有 WrongLeader 为 false, client 才接受这个结果
         reply.WrongLeader = false
     }
+    return reply, err
+}
+
+// 注销一个 client
+// 该版本注销 cid2seq
+func (dbs *DBServer) Close(ctx context.Context, args *CloseArgs) (*CloseReply, error) {
+    var err error
+    reply := new(CloseReply)
+
+    // 休眠两个 rpc 超时时间, 保证命令执行完
+    time.Sleep(2 * RpcCallTimeout)
+
+    dbs.mu.Lock()
+    if _, ok := dbs.cid2seq[args.Cid]; ok {
+        delete(dbs.cid2seq, args.Cid)
+        reply.Success = true
+    } else {
+        err = errors.New(fmt.Sprintf("[ErrCloseClient] duplicated closed cid %v", args.Cid))
+        reply.Success = false
+    }
+    dbs.mu.Unlock()
     return reply, err
 }

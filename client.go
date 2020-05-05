@@ -13,6 +13,7 @@ type Client interface {
     Get(key []byte) (value []byte, err error)
     Put(key, value []byte) error
     Delete(key []byte) error
+    Close()
     initRaftDBClients(servers []string)
 }
 
@@ -38,6 +39,8 @@ func GetDefaultClient(addr PeerAddr) *DefaultClient {
     return client
 }
 
+// 供外部接口调用, 执行 Get 操作
+// 对于不存在的 key, Get 会返回一个空的 value 和一个 not found 的错误
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     DPrintf("[Client:Get] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
@@ -67,6 +70,8 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     }
 }
 
+// 供外部接口调用, 执行 Put 操作
+// 对于存在的 key, Put 覆盖旧的 value
 func (client *DefaultClient) Put(key, value []byte) error {
     DPrintf("[Client:Put] key: %s, value: %s", key, value)
     curSeq := atomic.AddInt64(&client.seq, 1)
@@ -97,6 +102,8 @@ func (client *DefaultClient) Put(key, value []byte) error {
     }
 }
 
+// 供外部接口调用, 执行 Delete 操作
+// 对于不存在的 key, Delete 不会返回错误
 func (client *DefaultClient) Delete(key []byte) error {
     DPrintf("[Client:Delete] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
@@ -123,6 +130,23 @@ func (client *DefaultClient) Delete(key []byte) error {
             continue
         }
         return err
+    }
+}
+
+// 供外部接口调用, 主动关闭一个 client
+func (client *DefaultClient) Close() {
+    // 向所有 server 发送关闭请求
+    for i := 0; i < len(client.servers); i++ {
+        args := &CloseArgs{Cid: client.cid}
+        i = i % len(client.servers)
+        server, err := client.getDBClient(client.serverAddr[i])
+        if err != nil {
+            log.Printf(err.Error())
+        }
+        _, err = server.Close(context.Background(), args)
+        if err != nil {
+            log.Printf(err.Error())
+        }
     }
 }
 

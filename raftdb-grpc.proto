@@ -17,6 +17,14 @@ message Op {
   Type type = 6;
 }
 
+message CloseArgs {
+  string cid = 1;
+}
+
+message CloseReply {
+  bool success = 1;
+}
+
 message GetArgs {
   bytes key = 1;
   int64 seq = 2;
@@ -53,4 +61,5 @@ service RaftDBService {
   rpc Get(GetArgs) returns (GetReply);
   rpc Put(PutArgs) returns (PutReply);
   rpc Delete(DeleteArgs) returns (DeleteReply);
+  rpc Close(CloseArgs) returns (CloseReply);
 }
