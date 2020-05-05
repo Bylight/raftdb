@@ -9,7 +9,7 @@ import (
     "sync/atomic"
 )
 
-const RpcCallTimeout = 10000
+const RpcCallTimeout = 5000
 const DupReadOnlyOp = "DupReadOnlyOp"
 const Debug = true
 
