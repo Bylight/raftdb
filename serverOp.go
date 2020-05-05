@@ -19,17 +19,20 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
         Err:   "",
     }
     reply.WrongLeader = true
+    reply.Duplicated = false
     // Leader 才能保证数据是最新的
     if isLeader := dbs.rf.GetIsLeader() ;!isLeader {
         return reply, err
     }
     dbs.doOperation(&op)
+    // 先检测是否是因为操作过时而没有执行
+    if  op.Err == DupReadOnlyOp {
+        reply.Duplicated = true
+        return reply, err
+    }
     // 错误要报告给 client
     if op.Err != "" {
         err = errors.New(op.Err)
-    }
-    if op.Err == DupReadOnlyOp {
-        return reply, err
     }
     reply.Value = op.Value
     // 只有 WrongLeader 为 false, client 才接受这个结果

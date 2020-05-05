@@ -34,6 +34,7 @@ message GetArgs {
 message GetReply {
   bytes value = 1;
   bool wrong_leader = 2;
+  bool duplicated = 3;
 }
 
 message PutArgs {

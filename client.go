@@ -57,8 +57,8 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
-        // 只读操作可直接重试
-        if err != nil && err.Error() == DupReadOnlyOp {
+        // 没有执行则直接重新发送
+        if reply.Duplicated {
             continue
         }
         count++
