@@ -1,6 +1,8 @@
 package raftdb
 
-import "fmt"
+import (
+    "fmt"
+)
 
 func (client *DefaultClient) getDBClient(target string) (RaftDBServiceClient, error) {
     res, ok := client.servers[target]

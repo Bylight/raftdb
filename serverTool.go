@@ -5,6 +5,8 @@ import (
     "encoding/gob"
     "errors"
     "log"
+    "math/rand"
+    "time"
 )
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
@@ -118,4 +120,14 @@ func decodeOp(data []byte) (Op, error) {
         log.Printf("[DecodingError]: decode op %v error[%v]", data, err)
     }
     return op, nil
+}
+
+// 生成 [min, max] 的随机数
+func getRandNum(min, max int) int {
+    rand.Seed(time.Now().UnixNano())
+    if max <= 0 || max <= min {
+        return rand.Intn(RpcCallTimeout)
+    }
+    randTime := min + rand.Intn(max - min)
+    return randTime
 }

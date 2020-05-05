@@ -64,8 +64,10 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
     }
     // 等待操作结果
     ch := dbs.getAgreeCh(index)
+    // 设置随机超时时间
+    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout / 2)
     select {
-    case <- time.After(RpcCallTimeout * time.Millisecond):
+    case <- time.After(time.Duration(timeout) * time.Millisecond):
         DPrintf("[PutTimeoutInServer] op key %s value %s", op.Key, op.Value)
     case res := <-ch:
         dbs.mu.Lock()
@@ -108,8 +110,10 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
     }
     // 等待操作结果
     ch := dbs.getAgreeCh(index)
+    // 设置随机超时时间
+    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout / 2)
     select {
-    case <- time.After(RpcCallTimeout * time.Millisecond):
+    case <- time.After(time.Duration(timeout) * time.Millisecond):
         DPrintf("[DeleteTimeoutInServer] op key %s", op.Value)
     case res := <-ch:
         dbs.mu.Lock()
@@ -135,8 +139,8 @@ func (dbs *DBServer) Close(ctx context.Context, args *CloseArgs) (*CloseReply, e
     var err error
     reply := new(CloseReply)
 
-    // 休眠两个 rpc 超时时间, 保证命令执行完
-    time.Sleep(2 * RpcCallTimeout)
+    // 休眠五个 rpc 超时时间, 保证命令执行完
+    time.Sleep(5 * RpcCallTimeout)
 
     dbs.mu.Lock()
     if _, ok := dbs.cid2seq[args.Cid]; ok {
