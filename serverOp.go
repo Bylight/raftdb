@@ -3,7 +3,6 @@ package raftdb
 import (
     "context"
     "errors"
-    "fmt"
     "time"
 )
 
@@ -155,9 +154,6 @@ func (dbs *DBServer) Close(ctx context.Context, args *CloseArgs) (*CloseReply, e
     if _, ok := dbs.cid2seq[args.Cid]; ok {
         delete(dbs.cid2seq, args.Cid)
         reply.Success = true
-    } else {
-        err = errors.New(fmt.Sprintf("[ErrCloseClient] duplicated closed cid %v", args.Cid))
-        reply.Success = false
     }
     dbs.mu.Unlock()
     return reply, err
