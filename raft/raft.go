@@ -90,7 +90,7 @@ func (rf *Raft) Start(cmd interface{}) (index int64, term int64, isLeader bool) 
     DPrintf("[StartInRaft] start new cmd in index %v", index)
 
     rf.saveState()
-    rf.doAppendEntries()
+    // rf.doAppendEntries()
     return index, term, isLeader
 }
 
