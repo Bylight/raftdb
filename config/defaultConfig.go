@@ -1,8 +1,10 @@
-package raftdb
+package config
 
 import (
     "fmt"
+    "github.com/Bylight/raftdb/gRPC"
     "github.com/Bylight/raftdb/raft"
+    "github.com/Bylight/raftdb/server"
     "google.golang.org/grpc"
     "log"
     "net"
@@ -13,14 +15,6 @@ const DefaultStoreFile = "./db"
 const DefaultRaftServicePort = ":7086"
 const DefaultDbServicePort = ":7087"
 const DefaultSnapshotThreshold = -1
-
-type Config interface {
-    InitRaftDB()
-    initRaftClients()
-    initRaftServer(raft *raft.Raft)
-    initRaftDBServer(dbServer *DBServer)
-    initDB() *DBServer
-}
 
 // DefaultConfig 用于保存 raftdb 配置
 type DefaultConfig struct {
@@ -34,7 +28,7 @@ type DefaultConfig struct {
 }
 
 type ConfigDb struct {
-    Db Store
+    Db        server.Store
     StoreFile string
 }
 
@@ -44,7 +38,7 @@ type PeerAddr struct {
 }
 
 func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
-    db := NewDefaultDB(DefaultStoreFile)
+    db := server.NewDefaultDB(DefaultStoreFile)
     configDb := ConfigDb{
         Db:        db,
         StoreFile: DefaultStoreFile,
@@ -55,7 +49,7 @@ func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
         DbServicePort:     DefaultDbServicePort,
         ConfigDb:          configDb,
         PeerAddr:          addr,
-        Persist: raft.MakePersist(),
+        Persist:           raft.MakePersist(),
     }
     return config
 }
@@ -63,7 +57,7 @@ func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
 func (config *DefaultConfig) InitRaftDB() {
     config.initRaftClients()
     dbServer := config.initDB()
-    go config.initRaftServer(dbServer.rf)
+    go config.initRaftServer(dbServer.GetRaft())
     config.initRaftDBServer(dbServer)
 }
 
@@ -80,7 +74,7 @@ func (config *DefaultConfig) initRaftClients() {
         if v == me {
             continue
         }
-        conn, err := grpc.Dial(v + DefaultRaftServicePort, grpc.WithInsecure())
+        conn, err := grpc.Dial(v +DefaultRaftServicePort, grpc.WithInsecure())
         if err != nil {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
@@ -108,18 +102,18 @@ func (config *DefaultConfig) initRaftServer(raftServer *raft.Raft) {
 
 // 启动一个 raftdb server, 循环响应 raftdb client 的请求
 // 只应调用一次
-func (config *DefaultConfig) initRaftDBServer(dbServer *DBServer) {
+func (config *DefaultConfig) initRaftDBServer(dbServer *server.DBServer) {
     listener, err := net.Listen("tcp", config.DbServicePort)
     if err != nil {
         panic(fmt.Sprintf("[ErrInit] Error in initRaftDBServer: %v", err))
     }
     server := grpc.NewServer()
-    RegisterRaftDBServiceServer(server, dbServer)
+    gRPC.RegisterRaftDBServiceServer(server, dbServer)
     log.Println("[InitRaftDB] init raftDB server")
     server.Serve(listener)
 }
 
 // 初始化 DBServer
-func (config *DefaultConfig) initDB() *DBServer {
-    return startDBServer(config.Clients, config.Me, config.Persist, config.SnapshotThreshold, config.Db)
+func (config *DefaultConfig) initDB() *server.DBServer {
+    return server.StartDBServer(config.Clients, config.Me, config.Persist, config.SnapshotThreshold, config.Db)
 }

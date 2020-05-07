@@ -1,8 +1,9 @@
-package raftdb
+package server
 
 import (
     "bytes"
     "encoding/gob"
+    "github.com/Bylight/raftdb/gRPC"
     "github.com/Bylight/raftdb/raft"
     "log"
     "sync"
@@ -27,9 +28,9 @@ type DBServer struct {
     snapshotCount int
     dead int32
 
-    db Store
-    cid2seq map[string]int64 // 记录每个 DefaultClient 发送的最大命令序列号
-    agreeChMap map[int64]chan Op // 通知 server 向 raft 发起操作请求
+    db      Store
+    cid2seq map[string]int64          // 记录每个 DefaultClient 发送的最大命令序列号
+    agreeChMap map[int64]chan gRPC.Op // 通知 server 向 raft 发起操作请求
 }
 
 // 销毁一个 server
@@ -50,13 +51,13 @@ func (dbs *DBServer) Killed() bool {
 // 获取一个 server 内部传递 Op 的信道, index 为 raft start 该 Op 后返回的 index
 // 收到来自 DefaultClient 的 Op 请求后, 监听该信道
 // 直到 server 收到 raft apply 成功的 cmd 并成功执行 Op, 然后从该信道获取操作结果
-func (dbs *DBServer) getAgreeCh(index int64) chan Op {
+func (dbs *DBServer) getAgreeCh(index int64) chan gRPC.Op {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
 
     ch, ok := dbs.agreeChMap[index]
     if !ok {
-        ch = make(chan Op, 1) // 缓存为 1, 保证不阻塞该信道
+        ch = make(chan gRPC.Op, 1) // 缓存为 1, 保证不阻塞该信道
         dbs.agreeChMap[index] = ch
     }
     return ch
@@ -141,18 +142,18 @@ func (dbs *DBServer) decodeSnapshot(data []byte) {
 
 // 对数据库执行具体操作
 // 该方法应为唯一能对数据库进行操作的函数
-func (dbs *DBServer) doOperation(op *Op) {
+func (dbs *DBServer) doOperation(op *gRPC.Op) {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
     var err error
     // 只处理最新的请求
     if !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
         switch op.Type {
-        case Op_GET:
+        case gRPC.Op_GET:
             op.Value, err = dbs.db.Get(op.Key)
-        case Op_PUT:
+        case gRPC.Op_PUT:
             err = dbs.db.Put(op.Key, op.Value)
-        case Op_DELETE:
+        case gRPC.Op_DELETE:
             err = dbs.db.Delete(op.Key)
         }
         dbs.cid2seq[op.Cid] = op.Seq
@@ -166,13 +167,17 @@ func (dbs *DBServer) doOperation(op *Op) {
             DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
         }
     // 重复的只读请求, 仅需重新执行
-    } else if op.Type == Op_GET {
+    } else if op.Type == gRPC.Op_GET {
         op.Err = DupReadOnlyOp
     }
 }
 
+func (dbs *DBServer) GetRaft() *raft.Raft {
+    return dbs.rf
+}
+
 // 完成一个 DBSServer 的启动
-func startDBServer(
+func StartDBServer(
     servers map[string]*raft.RaftServiceClient, me string, persist *raft.Persist, snapshotThreshold int, db Store,
     ) *DBServer {
     dbs := new(DBServer)
@@ -187,7 +192,7 @@ func startDBServer(
     dbs.applyCh = make(chan raft.ApplyMsg)
     dbs.killCh = make(chan bool, 1)
     dbs.cid2seq = make(map[string]int64)
-    dbs.agreeChMap = make(map[int64]chan Op)
+    dbs.agreeChMap = make(map[int64]chan gRPC.Op)
     go dbs.waitApply()
     if snapshot := persist.ReadSnapshot(); snapshot != nil {
         dbs.decodeSnapshot(snapshot)

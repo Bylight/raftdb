@@ -1,10 +1,11 @@
-package raftdb
+package client
 
 import (
     "fmt"
+    "github.com/Bylight/raftdb/gRPC"
 )
 
-func (client *DefaultClient) getDBClient(target string) (RaftDBServiceClient, error) {
+func (client *DefaultClient) getDBClient(target string) (gRPC.RaftDBServiceClient, error) {
     res, ok := client.servers[target]
     if !ok {
         return nil, fmt.Errorf("no connection to raftdb is available: %s", target)

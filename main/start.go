@@ -1,12 +1,12 @@
 package main
 
 import (
-    "github.com/Bylight/raftdb"
+    "github.com/Bylight/raftdb/config"
     "log"
 )
 
 func main() {
-    addr := raftdb.PeerAddr{
+    addr := config.PeerAddr{
         Me:         "106.52.184.128", // tencent
         // Me:         "116.62.27.142", // ali
         // Me:         "119.3.209.146", // huawei
@@ -16,8 +16,8 @@ func main() {
             "119.3.209.146", // huawei
         },
     }
-    config := raftdb.GetDefaultConfig(addr)
-    config.InitRaftDB()
+    cfg := config.GetDefaultConfig(addr)
+    cfg.InitRaftDB()
     log.Println("InitRaftDB")
 }
 

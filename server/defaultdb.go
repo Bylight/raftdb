@@ -1,4 +1,4 @@
-package raftdb
+package server
 
 import (
     "bytes"

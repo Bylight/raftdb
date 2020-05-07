@@ -1,4 +1,4 @@
-package raftdb
+package server
 
 type Store interface {
     Get(key []byte) (value []byte, err error)

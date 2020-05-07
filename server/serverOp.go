@@ -1,22 +1,23 @@
-package raftdb
+package server
 
 import (
     "context"
     "errors"
+    "github.com/Bylight/raftdb/gRPC"
     "time"
 )
 
 // Get 是只读请求, 无需写入日志, 在确认自己是 Leader 的情况下
-func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) {
+func (dbs *DBServer) Get(ctx context.Context, args *gRPC.GetArgs) (*gRPC.GetReply, error) {
     var err error
-    reply := new(GetReply)
+    reply := new(gRPC.GetReply)
     // Get 请求是幂等的, 可以重复, 不需要记录 cid; 更新: 但是如果不保证 get 操作的线性执行, 会读到旧的结果
-    op := Op{
-        Key:   args.Key,
-        Seq:   args.Seq,
-        Type:  Op_GET,
-        Cid: args.Cid,
-        Err:   "",
+    op := gRPC.Op{
+        Key:  args.Key,
+        Seq:  args.Seq,
+        Type: gRPC.Op_GET,
+        Cid:  args.Cid,
+        Err:  "",
     }
     reply.WrongLeader = true
     reply.Duplicated = false
@@ -40,16 +41,16 @@ func (dbs *DBServer) Get(ctx context.Context, args *GetArgs) (*GetReply, error) 
     return reply, err
 }
 
-func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) {
+func (dbs *DBServer) Put(ctx context.Context, args *gRPC.PutArgs) (*gRPC.PutReply, error) {
     var err error
-    reply := new(PutReply)
-    op := Op{
+    reply := new(gRPC.PutReply)
+    op := gRPC.Op{
         Key:   args.Key,
         Value: args.Value,
         Cid:   args.Cid,
         Seq:   args.Seq,
         Err:   "",
-        Type:  Op_PUT,
+        Type:  gRPC.Op_PUT,
     }
     reply.WrongLeader = true
     bts, err := encodeOp(op)
@@ -65,7 +66,7 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
     // 等待操作结果
     ch := dbs.getAgreeCh(index)
     // 设置随机超时时间
-    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout / 2)
+    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout/ 2)
     select {
     case <- time.After(time.Duration(timeout) * time.Millisecond):
         DPrintf("[PutTimeoutInServer] op key %s value %s", op.Key, op.Value)
@@ -87,15 +88,15 @@ func (dbs *DBServer) Put(ctx context.Context, args *PutArgs) (*PutReply, error) 
     return reply, err
 }
 
-func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply, error) {
+func (dbs *DBServer) Delete(ctx context.Context, args *gRPC.DeleteArgs) (*gRPC.DeleteReply, error) {
     var err error
-    reply := new(DeleteReply)
-    op := Op{
-        Key:   args.Key,
-        Cid:   args.Cid,
-        Seq:   args.Seq,
-        Err:   "",
-        Type:  Op_DELETE,
+    reply := new(gRPC.DeleteReply)
+    op := gRPC.Op{
+        Key:  args.Key,
+        Cid:  args.Cid,
+        Seq:  args.Seq,
+        Err:  "",
+        Type: gRPC.Op_DELETE,
     }
     reply.WrongLeader = true
     bts, err := encodeOp(op)
@@ -111,7 +112,7 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
     // 等待操作结果
     ch := dbs.getAgreeCh(index)
     // 设置随机超时时间
-    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout / 2)
+    timeout := RpcCallTimeout + getRandNum(0, RpcCallTimeout/ 2)
     select {
     case <- time.After(time.Duration(timeout) * time.Millisecond):
         DPrintf("[DeleteTimeoutInServer] op key %s", op.Value)
@@ -135,9 +136,9 @@ func (dbs *DBServer) Delete(ctx context.Context, args *DeleteArgs) (*DeleteReply
 
 // 注销一个 client
 // 该版本注销 cid2seq
-func (dbs *DBServer) Close(ctx context.Context, args *CloseArgs) (*CloseReply, error) {
+func (dbs *DBServer) Close(ctx context.Context, args *gRPC.CloseArgs) (*gRPC.CloseReply, error) {
     var err error
-    reply := new(CloseReply)
+    reply := new(gRPC.CloseReply)
 
     // 休眠五个 rpc 超时时间, 保证命令执行完
     time.Sleep(5 * RpcCallTimeout)
