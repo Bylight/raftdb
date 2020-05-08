@@ -1,0 +1,66 @@
+syntax = "proto3";
+package gRPC;
+
+option go_package = ".;gRPC";
+
+message Op {
+  enum Type {
+    GET = 0;
+    PUT = 1;
+    DELETE = 2;
+  }
+  bytes key = 1;
+  bytes value = 2;
+  string cid = 3;
+  int64 seq = 4;
+  string err = 5;
+  Type type = 6;
+}
+
+message CloseArgs {
+  string cid = 1;
+}
+
+message CloseReply {
+  bool success = 1;
+}
+
+message GetArgs {
+  bytes key = 1;
+  int64 seq = 2;
+  string cid = 3;
+}
+
+message GetReply {
+  bytes value = 1;
+  bool wrong_leader = 2;
+  bool duplicated = 3;
+}
+
+message PutArgs {
+  bytes key = 1;
+  bytes value = 2;
+  int64 seq = 3;
+  string cid = 4;
+}
+
+message PutReply {
+  bool wrong_leader = 1;
+}
+
+message DeleteArgs {
+  bytes key = 1;
+  int64 seq = 2;
+  string cid = 3;
+}
+
+message DeleteReply {
+  bool wrong_leader = 1;
+}
+
+service RaftDBService {
+  rpc Get(GetArgs) returns (GetReply);
+  rpc Put(PutArgs) returns (PutReply);
+  rpc Delete(DeleteArgs) returns (DeleteReply);
+  rpc Close(CloseArgs) returns (CloseReply);
+}
