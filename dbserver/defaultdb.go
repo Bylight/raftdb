@@ -1,4 +1,4 @@
-package server
+package dbserver
 
 import (
     "bytes"

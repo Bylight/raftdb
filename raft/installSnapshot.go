@@ -5,7 +5,7 @@ import (
     "log"
 )
 
-// raft server 响应 InstallSnapshot RPC
+// raft dbserver 响应 InstallSnapshot RPC
 func (rf *Raft) InstallSnapshot(ctx context.Context, args *InstallSnapshotArgs) (*InstallSnapshotReply, error) {
     rf.mu.Lock()
     defer rf.mu.Unlock()
@@ -53,7 +53,7 @@ func (rf *Raft) InstallSnapshot(ctx context.Context, args *InstallSnapshotArgs) 
     return reply, nil
 }
 
-// raft client 发起 InstallSnapshot RPC
+// raft dbclient 发起 InstallSnapshot RPC
 func (rf *Raft) sendInstallSnapshot(server string, ctx context.Context, args *InstallSnapshotArgs, reply *InstallSnapshotReply) error {
     client, err := rf.getPeerClient(server)
     if err != nil {

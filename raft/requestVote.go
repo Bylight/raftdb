@@ -5,7 +5,7 @@ import (
     "sync/atomic"
 )
 
-// raft server 响应 RequestVote RPC
+// raft dbserver 响应 RequestVote RPC
 func (rf *Raft) RequestVote(ctx context.Context, args *RequestVoteArgs) (*RequestVoteReply, error) {
     rf.mu.Lock()
     defer rf.mu.Unlock()
@@ -48,7 +48,7 @@ func (rf *Raft) RequestVote(ctx context.Context, args *RequestVoteArgs) (*Reques
     return reply, nil
 }
 
-// raft client 发起 RequestVote RPC
+// raft dbclient 发起 RequestVote RPC
 func (rf *Raft) sendRequestVote(server string, ctx context.Context, args *RequestVoteArgs, reply *RequestVoteReply) error {
     client, err := rf.getPeerClient(server)
     if err != nil {

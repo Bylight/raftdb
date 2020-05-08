@@ -19,7 +19,7 @@ type ApplyMsg struct {
 // Raft 定义一个 Raft 节点
 type Raft struct {
     mu sync.Mutex
-    peers map[string]*RaftServiceClient // 每个 raft peer 都是一个 server，使用 "ipAddr" 作为key
+    peers map[string]*RaftServiceClient // 每个 raft peer 都是一个 dbserver，使用 "ipAddr" 作为key
     me string // this peer's index into peers[]
     persist *Persist
     state State
@@ -182,7 +182,7 @@ func (rf *Raft) doApplyEntry() {
     }
 }
 
-// notifyRestore 主动通知 server 恢复为 snapshot 状态
+// notifyRestore 主动通知 dbserver 恢复为 snapshot 状态
 // 在落后 Follower 收到来自 Leader 的 snapshot 时被触发
 // 由调用者加锁
 func (rf *Raft) notifyRestore() {
@@ -237,7 +237,7 @@ func (rf *Raft) Killed() bool {
     return z == 1
 }
 
-// Make 创建一个新的 raft 节点，供 server 调用
+// Make 创建一个新的 raft 节点，供 dbserver 调用
 func Make(peers map[string]*RaftServiceClient, me string,
     persist *Persist, applyCh chan ApplyMsg) *Raft {
     DPrintf("[MakeRaft] %v", me)

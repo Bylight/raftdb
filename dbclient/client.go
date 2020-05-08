@@ -1,4 +1,4 @@
-package client
+package dbclient
 
 type Client interface {
     Get(key []byte) (value []byte, err error)

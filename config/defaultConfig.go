@@ -4,7 +4,7 @@ import (
     "fmt"
     "github.com/Bylight/raftdb/gRPC"
     "github.com/Bylight/raftdb/raft"
-    "github.com/Bylight/raftdb/server"
+    "github.com/Bylight/raftdb/dbserver"
     "google.golang.org/grpc"
     "log"
     "net"
@@ -28,17 +28,12 @@ type DefaultConfig struct {
 }
 
 type ConfigDb struct {
-    Db        server.Store
+    Db        dbserver.Store
     StoreFile string
 }
 
-type PeerAddr struct {
-    Me string
-    ClientAddr []string
-}
-
 func GetDefaultConfig(addr PeerAddr) *DefaultConfig {
-    db := server.NewDefaultDB(DefaultStoreFile)
+    db := dbserver.NewDefaultDB(DefaultStoreFile)
     configDb := ConfigDb{
         Db:        db,
         StoreFile: DefaultStoreFile,
@@ -85,7 +80,7 @@ func (config *DefaultConfig) initRaftClients() {
     log.Println("[InitRaftDB] init raft clients")
 }
 
-// 启动一个 raft server, 循环响应 raft client 的请求
+// 启动一个 raft dbserver, 循环响应 raft dbclient 的请求
 // 只应调用一次
 func (config *DefaultConfig) initRaftServer(raftServer *raft.Raft) {
     listener, err := net.Listen("tcp", config.RaftServicePort)
@@ -96,24 +91,24 @@ func (config *DefaultConfig) initRaftServer(raftServer *raft.Raft) {
     server := grpc.NewServer()
     raft.RegisterRaftServiceServer(server, raftServer)
     // 开启服务端
-    log.Println("[InitRaftDB] init raft server")
+    log.Println("[InitRaftDB] init raft dbserver")
     server.Serve(listener)
 }
 
-// 启动一个 raftdb server, 循环响应 raftdb client 的请求
+// 启动一个 raftdb dbserver, 循环响应 raftdb dbclient 的请求
 // 只应调用一次
-func (config *DefaultConfig) initRaftDBServer(dbServer *server.DBServer) {
+func (config *DefaultConfig) initRaftDBServer(dbServer *dbserver.DBServer) {
     listener, err := net.Listen("tcp", config.DbServicePort)
     if err != nil {
         panic(fmt.Sprintf("[ErrInit] Error in initRaftDBServer: %v", err))
     }
     server := grpc.NewServer()
     gRPC.RegisterRaftDBServiceServer(server, dbServer)
-    log.Println("[InitRaftDB] init raftDB server")
+    log.Println("[InitRaftDB] init raftDB dbserver")
     server.Serve(listener)
 }
 
 // 初始化 DBServer
-func (config *DefaultConfig) initDB() *server.DBServer {
-    return server.StartDBServer(config.Clients, config.Me, config.Persist, config.SnapshotThreshold, config.Db)
+func (config *DefaultConfig) initDB() *dbserver.DBServer {
+    return dbserver.StartDBServer(config.Clients, config.Me, config.Persist, config.SnapshotThreshold, config.Db)
 }

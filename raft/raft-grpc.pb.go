@@ -728,7 +728,7 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// RaftServiceClient is the client API for RaftService service.
+// RaftServiceClient is the dbclient API for RaftService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RaftServiceClient interface {
@@ -772,7 +772,7 @@ func (c *raftServiceClient) InstallSnapshot(ctx context.Context, in *InstallSnap
 	return out, nil
 }
 
-// RaftServiceServer is the server API for RaftService service.
+// RaftServiceServer is the dbserver API for RaftService service.
 type RaftServiceServer interface {
 	AppendEntries(context.Context, *AppendEntriesArgs) (*AppendEntriesReply, error)
 	RequestVote(context.Context, *RequestVoteArgs) (*RequestVoteReply, error)

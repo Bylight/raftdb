@@ -1,4 +1,4 @@
-package server
+package dbserver
 
 import (
     "bytes"
@@ -83,12 +83,12 @@ func (dbs *DBServer) encodeSnapshot() ([]byte, error) {
 
     err = enc.Encode(snapshot)
     if err != nil {
-        log.Printf("[EncodingError] server %v encode snapshot error[%v]", me, err)
+        log.Printf("[EncodingError] dbserver %v encode snapshot error[%v]", me, err)
         return nil, err
     }
     err = enc.Encode(cid2seq)
     if err != nil {
-        log.Printf("[EncodingError] server %v encode cid2seq error[%v]", me, err)
+        log.Printf("[EncodingError] dbserver %v encode cid2seq error[%v]", me, err)
         return nil, err
     }
 

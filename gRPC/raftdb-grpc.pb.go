@@ -861,7 +861,7 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// RaftDBServiceClient is the client API for RaftDBService service.
+// RaftDBServiceClient is the dbclient API for RaftDBService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RaftDBServiceClient interface {
@@ -915,7 +915,7 @@ func (c *raftDBServiceClient) Close(ctx context.Context, in *CloseArgs, opts ...
 	return out, nil
 }
 
-// RaftDBServiceServer is the server API for RaftDBService service.
+// RaftDBServiceServer is the dbserver API for RaftDBService service.
 type RaftDBServiceServer interface {
 	Get(context.Context, *GetArgs) (*GetReply, error)
 	Put(context.Context, *PutArgs) (*PutReply, error)

@@ -1,4 +1,4 @@
-package server
+package dbserver
 
 type Store interface {
     Get(key []byte) (value []byte, err error)

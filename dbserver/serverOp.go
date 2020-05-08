@@ -1,4 +1,4 @@
-package server
+package dbserver
 
 import (
     "context"
@@ -31,12 +31,12 @@ func (dbs *DBServer) Get(ctx context.Context, args *gRPC.GetArgs) (*gRPC.GetRepl
         reply.Duplicated = true
         return reply, err
     }
-    // 错误要报告给 client
+    // 错误要报告给 dbclient
     if op.Err != "" {
         err = errors.New(op.Err)
     }
     reply.Value = op.Value
-    // 只有 WrongLeader 为 false, client 才接受这个结果
+    // 只有 WrongLeader 为 false, dbclient 才接受这个结果
     reply.WrongLeader = false
     return reply, err
 }
@@ -78,11 +78,11 @@ func (dbs *DBServer) Put(ctx context.Context, args *gRPC.PutArgs) (*gRPC.PutRepl
         if !isSameOp(op, res) {
             return reply, err
         }
-        // 错误要报告给 client
+        // 错误要报告给 dbclient
         if res.Err != "" {
             err = errors.New(res.Err)
         }
-        // 只有 WrongLeader 为 false, client 才接受这个结果
+        // 只有 WrongLeader 为 false, dbclient 才接受这个结果
         reply.WrongLeader = false
     }
     return reply, err
@@ -124,17 +124,17 @@ func (dbs *DBServer) Delete(ctx context.Context, args *gRPC.DeleteArgs) (*gRPC.D
         if !isSameOp(op, res) {
             return reply, err
         }
-        // 错误要报告给 client
+        // 错误要报告给 dbclient
         if res.Err != "" {
             err = errors.New(res.Err)
         }
-        // 只有 WrongLeader 为 false, client 才接受这个结果
+        // 只有 WrongLeader 为 false, dbclient 才接受这个结果
         reply.WrongLeader = false
     }
     return reply, err
 }
 
-// 注销一个 client
+// 注销一个 dbclient
 // 该版本注销 cid2seq
 func (dbs *DBServer) Close(ctx context.Context, args *gRPC.CloseArgs) (*gRPC.CloseReply, error) {
     var err error

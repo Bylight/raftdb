@@ -1,4 +1,4 @@
-package server
+package dbserver
 
 import (
     "bytes"
@@ -14,7 +14,7 @@ const RpcCallTimeout = 5000
 const DupReadOnlyOp = "DupReadOnlyOp"
 const Debug = true
 
-// server 作为 raftdb 中与 client 进行直接交互的存在，属于一个“中间层”的存在
+// dbserver 作为 raftdb 中与 dbclient 进行直接交互的存在，属于一个“中间层”的存在
 // 将绑定一个 raft 节点，对于所有来自 DefaultClient 的指令，都会发送到对应 raft 节点；在 raft 已经确认 apply 后，才与实际的数据库进行交互，并将结果返回给 DefaultClient
 
 type DBServer struct {
@@ -30,10 +30,10 @@ type DBServer struct {
 
     db      Store
     cid2seq map[string]int64          // 记录每个 DefaultClient 发送的最大命令序列号
-    agreeChMap map[int64]chan gRPC.Op // 通知 server 向 raft 发起操作请求
+    agreeChMap map[int64]chan gRPC.Op // 通知 dbserver 向 raft 发起操作请求
 }
 
-// 销毁一个 server
+// 销毁一个 dbserver
 // 待拓展
 func (dbs *DBServer) Kill() {
     atomic.StoreInt32(&dbs.dead, 1)
@@ -48,9 +48,9 @@ func (dbs *DBServer) Killed() bool {
     return z == 1
 }
 
-// 获取一个 server 内部传递 Op 的信道, index 为 raft start 该 Op 后返回的 index
+// 获取一个 dbserver 内部传递 Op 的信道, index 为 raft start 该 Op 后返回的 index
 // 收到来自 DefaultClient 的 Op 请求后, 监听该信道
-// 直到 server 收到 raft apply 成功的 cmd 并成功执行 Op, 然后从该信道获取操作结果
+// 直到 dbserver 收到 raft apply 成功的 cmd 并成功执行 Op, 然后从该信道获取操作结果
 func (dbs *DBServer) getAgreeCh(index int64) chan gRPC.Op {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
@@ -79,11 +79,11 @@ func (dbs *DBServer) waitApply() {
     }
 }
 
-// server 根据来自 Raft 的 cmd 对数据库发起操作请求
+// dbserver 根据来自 Raft 的 cmd 对数据库发起操作请求
 func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
     bts, ok := msg.Cmd.([]byte)
     if !ok {
-        log.Printf("[ErrorCmdTypeInServer] server %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
+        log.Printf("[ErrorCmdTypeInServer] dbserver %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
         return
     }
     op, err := decodeOp(bts)
@@ -94,7 +94,7 @@ func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
     dbs.doOperation(&op)
     // 每次操作完都要检查是否需要令 raft 进行 log compaction
     go dbs.checkRaftLogCompaction(msg.CmdIndex)
-    // 操作结束后，将结果发送至信道，以通知 client 操作结果
+    // 操作结束后，将结果发送至信道，以通知 dbclient 操作结果
     safeSendOp(dbs.getAgreeCh(msg.CmdIndex), op)
 }
 
@@ -120,18 +120,18 @@ func (dbs *DBServer) checkRaftLogCompaction(lastIncludedIndex int64) {
     go dbs.rf.LogCompaction(snapshot, lastIncludedIndex)
 }
 
-// 令 server 恢复到 snapshot 的状态
+// 令 dbserver 恢复到 snapshot 的状态
 func (dbs *DBServer) decodeSnapshot(data []byte) {
     r := bytes.NewBuffer(data)
     dec := gob.NewDecoder(r)
 
     var snapshot []byte
     if err := dec.Decode(&snapshot); err != nil {
-        log.Printf("[DecodingErr] server %v decode snapshot error[%v]", dbs.me, err)
+        log.Printf("[DecodingErr] dbserver %v decode snapshot error[%v]", dbs.me, err)
     }
     var cid2seq map[string]int64
     if err := dec.Decode(&cid2seq); err != nil {
-        log.Printf("[DecodingErr] server %v decode cid2seq error[%v]", dbs.me, err)
+        log.Printf("[DecodingErr] dbserver %v decode cid2seq error[%v]", dbs.me, err)
     }
 
     dbs.mu.Lock()

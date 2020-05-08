@@ -1,11 +1,11 @@
-package client
+package dbclient
 
 import (
     "context"
     "fmt"
     "github.com/Bylight/raftdb/config"
     "github.com/Bylight/raftdb/gRPC"
-    "github.com/Bylight/raftdb/server"
+    "github.com/Bylight/raftdb/dbserver"
     "google.golang.org/grpc"
     "log"
     "sync"
@@ -42,7 +42,7 @@ func GetDefaultClient(addr config.PeerAddr) *DefaultClient {
 // 供外部接口调用, 执行 Get 操作
 // 对于不存在的 key, Get 会返回一个空的 value 和一个 not found 的错误
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
-    server.DPrintf("[Client:Get] key: %s", key)
+    dbserver.DPrintf("[Client:Get] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     // 即使出错, 也要尝试遍历各个节点, 这样节点意外宕机时才能保证系统可用
@@ -74,7 +74,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             }
             return nil, err
         }
-        // client 只能向 leader 发送请求
+        // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             currLeader = (currLeader + 1) % len(client.servers)
@@ -89,7 +89,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
 // 供外部接口调用, 执行 Put 操作
 // 对于存在的 key, Put 覆盖旧的 value
 func (client *DefaultClient) Put(key, value []byte) error {
-    server.DPrintf("[Client:Put] key: %s, value: %s", key, value)
+    dbserver.DPrintf("[Client:Put] key: %s, value: %s", key, value)
     curSeq := atomic.AddInt64(&client.seq, 1)
     currLeader := client.leader.safeGet()
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
@@ -115,7 +115,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
             }
             return err
         }
-        // client 只能向 leader 发送请求
+        // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             currLeader = (currLeader + 1) % len(client.servers)
@@ -129,7 +129,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
 // 供外部接口调用, 执行 Delete 操作
 // 对于不存在的 key, Delete 不会返回错误
 func (client *DefaultClient) Delete(key []byte) error {
-    server.DPrintf("[Client:Delete] key: %s", key)
+    dbserver.DPrintf("[Client:Delete] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     currLeader := client.leader.safeGet()
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
@@ -154,7 +154,7 @@ func (client *DefaultClient) Delete(key []byte) error {
             }
             return err
         }
-        // client 只能向 leader 发送请求
+        // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
         if reply.WrongLeader {
             currLeader = (currLeader + 1) % len(client.servers)
@@ -165,9 +165,9 @@ func (client *DefaultClient) Delete(key []byte) error {
     }
 }
 
-// 供外部接口调用, 主动关闭一个 client
+// 供外部接口调用, 主动关闭一个 dbclient
 func (client *DefaultClient) Close() {
-    // 向所有 server 发送关闭请求
+    // 向所有 dbserver 发送关闭请求
     for i := 0; i < len(client.servers); i++ {
         args := &gRPC.CloseArgs{Cid: client.cid}
         i = i % len(client.servers)
@@ -194,5 +194,5 @@ func (client *DefaultClient) initRaftDBClients(servers []string) {
         clients[v] = &client
     }
     client.servers = clients
-    log.Println("[InitInClient] init raftDB client")
+    log.Println("[InitInClient] init raftDB dbclient")
 }

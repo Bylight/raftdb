@@ -5,7 +5,7 @@ import (
     "log"
 )
 
-// raft server 响应 AppendEntries RPC
+// raft dbserver 响应 AppendEntries RPC
 func (rf *Raft) AppendEntries(context context.Context, args *AppendEntriesArgs) (*AppendEntriesReply, error) {
     rf.mu.Lock()
     defer rf.mu.Unlock()
@@ -77,7 +77,7 @@ func (rf *Raft) AppendEntries(context context.Context, args *AppendEntriesArgs) 
         if int64(len(rf.logs)) <= currIndex {
             rf.logs = append(rf.logs, args.Entries[currIndex-currPrevLogIndex-1:]...)
         }
-        DPrintf("[LogAppendedInRaftClient] client %v", rf.me)
+        DPrintf("[LogAppendedInRaftClient] dbclient %v", rf.me)
     }
     rf.saveState()
 
@@ -96,7 +96,7 @@ func (rf *Raft) AppendEntries(context context.Context, args *AppendEntriesArgs) 
     return reply, nil
 }
 
-// raft client 发起 AppendEntries RPC
+// raft dbclient 发起 AppendEntries RPC
 func (rf *Raft) sendAppendEntries(server string, ctx context.Context, args *AppendEntriesArgs, reply *AppendEntriesReply) error {
     client, err := rf.getPeerClient(server)
     if err != nil {
