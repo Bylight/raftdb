@@ -3,19 +3,19 @@ package dbserver
 import (
     "context"
     "errors"
-    "github.com/Bylight/raftdb/v2/gRPC"
+    "github.com/Bylight/raftdb/v2/dbRPC"
     "time"
 )
 
 // Get 是只读请求, 无需写入日志, 在确认自己是 Leader 的情况下
-func (dbs *DBServer) Get(ctx context.Context, args *gRPC.GetArgs) (*gRPC.GetReply, error) {
+func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetReply, error) {
     var err error
-    reply := new(gRPC.GetReply)
+    reply := new(dbRPC.GetReply)
     // Get 请求是幂等的, 可以重复, 不需要记录 cid; 更新: 但是如果不保证 get 操作的线性执行, 会读到旧的结果
-    op := gRPC.Op{
+    op := dbRPC.Op{
         Key:  args.Key,
         Seq:  args.Seq,
-        Type: gRPC.Op_GET,
+        Type: dbRPC.Op_GET,
         Cid:  args.Cid,
         Err:  "",
     }
@@ -42,16 +42,16 @@ func (dbs *DBServer) Get(ctx context.Context, args *gRPC.GetArgs) (*gRPC.GetRepl
     return reply, err
 }
 
-func (dbs *DBServer) Put(ctx context.Context, args *gRPC.PutArgs) (*gRPC.PutReply, error) {
+func (dbs *DBServer) Put(ctx context.Context, args *dbRPC.PutArgs) (*dbRPC.PutReply, error) {
     var err error
-    reply := new(gRPC.PutReply)
-    op := gRPC.Op{
+    reply := new(dbRPC.PutReply)
+    op := dbRPC.Op{
         Key:   args.Key,
         Value: args.Value,
         Cid:   args.Cid,
         Seq:   args.Seq,
         Err:   "",
-        Type:  gRPC.Op_PUT,
+        Type:  dbRPC.Op_PUT,
     }
     reply.WrongLeader = true
     bts, err := encodeOp(op)
@@ -89,15 +89,15 @@ func (dbs *DBServer) Put(ctx context.Context, args *gRPC.PutArgs) (*gRPC.PutRepl
     return reply, err
 }
 
-func (dbs *DBServer) Delete(ctx context.Context, args *gRPC.DeleteArgs) (*gRPC.DeleteReply, error) {
+func (dbs *DBServer) Delete(ctx context.Context, args *dbRPC.DeleteArgs) (*dbRPC.DeleteReply, error) {
     var err error
-    reply := new(gRPC.DeleteReply)
-    op := gRPC.Op{
+    reply := new(dbRPC.DeleteReply)
+    op := dbRPC.Op{
         Key:  args.Key,
         Cid:  args.Cid,
         Seq:  args.Seq,
         Err:  "",
-        Type: gRPC.Op_DELETE,
+        Type: dbRPC.Op_DELETE,
     }
     reply.WrongLeader = true
     bts, err := encodeOp(op)
@@ -137,9 +137,9 @@ func (dbs *DBServer) Delete(ctx context.Context, args *gRPC.DeleteArgs) (*gRPC.D
 
 // 注销一个 dbclient
 // 该版本注销 cid2seq
-func (dbs *DBServer) Close(ctx context.Context, args *gRPC.CloseArgs) (*gRPC.CloseReply, error) {
+func (dbs *DBServer) Close(ctx context.Context, args *dbRPC.CloseArgs) (*dbRPC.CloseReply, error) {
     var err error
-    reply := new(gRPC.CloseReply)
+    reply := new(dbRPC.CloseReply)
 
     // 休眠五个 rpc 超时时间, 保证命令执行完
     time.Sleep(5 * RpcCallTimeout)

@@ -4,7 +4,7 @@ import (
     "bytes"
     "encoding/gob"
     "errors"
-    "github.com/Bylight/raftdb/v2/gRPC"
+    "github.com/Bylight/raftdb/v2/dbRPC"
     "log"
     "math/rand"
     "time"
@@ -25,7 +25,7 @@ func safeSendBool(ch chan bool) {
     ch <- true
 }
 
-func safeSendOp(ch chan gRPC.Op, op gRPC.Op) {
+func safeSendOp(ch chan dbRPC.Op, op dbRPC.Op) {
     select {
     case <-ch:
     default:
@@ -34,9 +34,9 @@ func safeSendOp(ch chan gRPC.Op, op gRPC.Op) {
 }
 
 // 判断两个 Op 是否一致 (之前发送至 raft 的 cmd 可能被新日志覆盖)
-func isSameOp(a, b gRPC.Op) bool {
+func isSameOp(a, b dbRPC.Op) bool {
     res := a.Type == b.Type && a.Seq == b.Seq && isSameBytes(a.Key, b.Key) && a.Cid == b.Cid
-    if res && a.Type == gRPC.Op_PUT {
+    if res && a.Type == dbRPC.Op_PUT {
         res = res && isSameBytes(a.Value, b.Value)
     }
     return res
@@ -96,7 +96,7 @@ func (dbs *DBServer) encodeSnapshot() ([]byte, error) {
 }
 
 // 将 op 压缩为 byte 数组
-func encodeOp(op gRPC.Op) ([]byte, error) {
+func encodeOp(op dbRPC.Op) ([]byte, error) {
     w := new(bytes.Buffer)
     enc := gob.NewEncoder(w)
     err := enc.Encode(op)
@@ -109,8 +109,8 @@ func encodeOp(op gRPC.Op) ([]byte, error) {
 }
 
 // 将 byte 数组解码为 op
-func decodeOp(data []byte) (gRPC.Op, error) {
-    var op gRPC.Op
+func decodeOp(data []byte) (dbRPC.Op, error) {
+    var op dbRPC.Op
     if data == nil || len(data) < 1 { // empty data
         return op, errors.New("[DecodeOpErrorInServer] decode nil data")
     }

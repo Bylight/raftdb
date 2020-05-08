@@ -1,7 +1,7 @@
 syntax = "proto3";
 package gRPC;
 
-option go_package = ".;gRPC";
+option go_package = ".;dbRPC";
 
 message Op {
   enum Type {

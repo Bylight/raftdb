@@ -2,7 +2,7 @@ package config
 
 import (
     "fmt"
-    "github.com/Bylight/raftdb/v2/gRPC"
+    "github.com/Bylight/raftdb/v2/dbRPC"
     "github.com/Bylight/raftdb/v2/raft"
     "github.com/Bylight/raftdb/v2/dbserver"
     "google.golang.org/grpc"
@@ -103,7 +103,7 @@ func (config *DefaultConfig) initRaftDBServer(dbServer *dbserver.DBServer) {
         panic(fmt.Sprintf("[ErrInit] Error in initRaftDBServer: %v", err))
     }
     server := grpc.NewServer()
-    gRPC.RegisterRaftDBServiceServer(server, dbServer)
+    dbRPC.RegisterRaftDBServiceServer(server, dbServer)
     log.Println("[InitRaftDB] init raftDB dbserver")
     server.Serve(listener)
 }

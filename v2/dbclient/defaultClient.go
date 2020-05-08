@@ -4,7 +4,7 @@ import (
     "context"
     "fmt"
     "github.com/Bylight/raftdb/v2/config"
-    "github.com/Bylight/raftdb/v2/gRPC"
+    "github.com/Bylight/raftdb/v2/dbRPC"
     "google.golang.org/grpc"
     "log"
     "sync"
@@ -17,7 +17,8 @@ type DefaultClient struct {
     leader *safeCurrLeader // 当前 Leader 的 ip 地址
     cid string             // ip:port
     seq int64
-    servers map[string]*gRPC.RaftDBServiceClient // raftdb 的客户端, 使用 ipAddr 作为 key
+    servers map[string]*dbRPC.RaftDBServiceClient // raftdb 的客户端, 使用 ipAddr 作为 key
+    serverConns map[string]*grpc.ClientConn
     serverAddr []string
 }
 
@@ -48,7 +49,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     count := 0
     currLeader := client.leader.safeGet()
     for {
-        args := &gRPC.GetArgs{
+        args := &dbRPC.GetArgs{
             Key: key,
             Seq: curSeq,
             Cid: client.cid,
@@ -94,7 +95,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     count := 0
     for {
-        args := &gRPC.PutArgs{
+        args := &dbRPC.PutArgs{
             Key:   key,
             Value: value,
             Seq:   curSeq,
@@ -134,7 +135,7 @@ func (client *DefaultClient) Delete(key []byte) error {
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     count := 0
     for {
-        args := &gRPC.DeleteArgs{
+        args := &dbRPC.DeleteArgs{
             Key: key,
             Seq: curSeq,
             Cid: client.cid,
@@ -168,7 +169,7 @@ func (client *DefaultClient) Delete(key []byte) error {
 func (client *DefaultClient) Close() {
     // 向所有 dbserver 发送关闭请求
     for i := 0; i < len(client.servers); i++ {
-        args := &gRPC.CloseArgs{Cid: client.cid}
+        args := &dbRPC.CloseArgs{Cid: client.cid}
         i = i % len(client.servers)
         server, err := client.getDBClient(client.serverAddr[i])
         if err != nil {
@@ -178,20 +179,25 @@ func (client *DefaultClient) Close() {
         if err != nil {
             log.Printf(err.Error())
         }
+        // 主动关闭连接防止连接泄露
+        client.serverConns[client.serverAddr[i]].Close()
     }
 }
 
 // 初始化各个 raftdb 客户端, 用于向其发起操作请求
 func (client *DefaultClient) initRaftDBClients(servers []string) {
-    clients := make(map[string]*gRPC.RaftDBServiceClient)
+    clients := make(map[string]*dbRPC.RaftDBServiceClient)
+    conns := make(map[string]*grpc.ClientConn)
     for _, v := range servers {
         conn, err := grpc.Dial(v +config.DefaultDbServicePort, grpc.WithInsecure())
         if err != nil {
             panic(fmt.Sprintf("[ErrInit] Error in initRaftClients: %v", err))
         }
-        client := gRPC.NewRaftDBServiceClient(conn)
+        client := dbRPC.NewRaftDBServiceClient(conn)
         clients[v] = &client
+        conns[v] = conn
     }
     client.servers = clients
+    client.serverConns = conns
     log.Println("[InitInClient] init raftDB dbclient")
 }
