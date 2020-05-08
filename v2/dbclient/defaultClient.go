@@ -4,7 +4,6 @@ import (
     "context"
     "fmt"
     "github.com/Bylight/raftdb/v2/config"
-    "github.com/Bylight/raftdb/v2/dbserver"
     "github.com/Bylight/raftdb/v2/gRPC"
     "google.golang.org/grpc"
     "log"
@@ -42,7 +41,7 @@ func GetDefaultClient(addr config.PeerAddr) *DefaultClient {
 // 供外部接口调用, 执行 Get 操作
 // 对于不存在的 key, Get 会返回一个空的 value 和一个 not found 的错误
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
-    dbserver.DPrintf("[Client:Get] key: %s", key)
+    debugPrintf("[Client:Get] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     // 即使出错, 也要尝试遍历各个节点, 这样节点意外宕机时才能保证系统可用
@@ -89,7 +88,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
 // 供外部接口调用, 执行 Put 操作
 // 对于存在的 key, Put 覆盖旧的 value
 func (client *DefaultClient) Put(key, value []byte) error {
-    dbserver.DPrintf("[Client:Put] key: %s, value: %s", key, value)
+    debugPrintf("[Client:Put] key: %s, value: %s", key, value)
     curSeq := atomic.AddInt64(&client.seq, 1)
     currLeader := client.leader.safeGet()
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
@@ -129,7 +128,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
 // 供外部接口调用, 执行 Delete 操作
 // 对于不存在的 key, Delete 不会返回错误
 func (client *DefaultClient) Delete(key []byte) error {
-    dbserver.DPrintf("[Client:Delete] key: %s", key)
+    debugPrintf("[Client:Delete] key: %s", key)
     curSeq := atomic.AddInt64(&client.seq, 1)
     currLeader := client.leader.safeGet()
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效

@@ -3,7 +3,10 @@ package dbclient
 import (
     "fmt"
     "github.com/Bylight/raftdb/v2/gRPC"
+    "log"
 )
+
+var Debug = false
 
 func (client *DefaultClient) getDBClient(target string) (gRPC.RaftDBServiceClient, error) {
     res, ok := client.servers[target]
@@ -11,6 +14,10 @@ func (client *DefaultClient) getDBClient(target string) (gRPC.RaftDBServiceClien
         return nil, fmt.Errorf("no connection to raftdb is available: %s", target)
     }
     return *res, nil
+}
+
+func (client *DefaultClient) SetDebug(debug bool) {
+    Debug = debug
 }
 
 func (leaderCount *safeCurrLeader) safeGet() int {
@@ -38,4 +45,11 @@ func (leaderCount *safeCurrLeader) safeSet(i int) int {
     defer leaderCount.mu.Unlock()
     leaderCount.currLeader = i
     return leaderCount.currLeader
+}
+
+func debugPrintf(format string, a ...interface{}) (n int, err error) {
+    if Debug {
+        log.Printf(format, a...)
+    }
+    return
 }

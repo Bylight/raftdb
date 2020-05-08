@@ -26,6 +26,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *gRPC.GetArgs) (*gRPC.GetRepl
         return reply, err
     }
     dbs.doOperation(&op)
+    DPrintf("[RecOpResInServer] op %v, err %v", &op, op.Err)
     // 先检测是否是因为操作过时而没有执行
     if  op.Err == DupReadOnlyOp {
         reply.Duplicated = true
