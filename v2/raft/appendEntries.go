@@ -227,7 +227,7 @@ func (rf *Raft) swapHeartbeat() bool {
             continue
         }
         // 具体处理逻辑
-        go rf.swapHeartbeatWith(i, &count, resCh)
+        go rf.swapHeartbeatWith(i, &count, resCh, len(rf.peers) / 2)
     }
     // 设置阻塞超时时间
     select {
@@ -239,58 +239,8 @@ func (rf *Raft) swapHeartbeat() bool {
 }
 
 // 只发送心跳请求, 即 entries 为空的 AppendEntriesArgs
-func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool) {
-    rf.mu.Lock()
-    if rf.state != Leader {
-        rf.mu.Unlock()
-        return
-    }
-    args := new(AppendEntriesArgs)
-    args.Term = rf.currTerm
-    args.LeaderId = rf.me
-    args.LeaderCommitIndex = rf.commitIndex
-    // 每个节点有不同的数据
-    args.PrevLogIndex = rf.nextIndex[peerAddr] - 1
-    args.PrevLogTerm = rf.logs[rf.getCurrIndex(args.PrevLogIndex)].Term
-    reply := new(AppendEntriesReply)
-    // 只发送 Heartbeat
-    args.Entries = []*LogEntry{}
-    DPrintf("[SendHeartbeat]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
-    rf.mu.Unlock()
-
-    // 进行 RPC 调用
-    err := rf.sendAppendEntries(peerAddr, context.Background(), args, reply)
-    if err != nil {
-        log.Println(err)
-    }
-
-    rf.mu.Lock()
-    defer rf.mu.Unlock()
-    // fail because of out-dated term
-    // 收到更大的 Term，Leader 退位
-    if reply.Term > rf.currTerm {
-        rf.currTerm = reply.Term
-        rf.changeStateTo(Follower)
-        // 重置选举 timer
-        rf.electionTimer.Reset(getRandElectionTimeout())
-        rf.saveState()
-        handleHeartbeatRes(count, resCh, len(rf.peers) / 2)
-        return
-    }
-    // 处理回调结果
-    // rf Term 与 args Term 不一致，说明是过期的 reply
-    if rf.currTerm != args.Term || rf.state != Leader {
-        handleHeartbeatRes(count, resCh, len(rf.peers) / 2)
-        return
-    }
-    // 维护 log consistency
-    rf.maintainLogConsistency(peerAddr, args, reply)
-
-    // 心跳结果回调
-    handleHeartbeatRes(count, resCh, len(rf.peers) / 2)
-}
-
-func handleHeartbeatRes(count *int32, resCh chan bool, needLen int) {
+func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool, needLen int) {
+    rf.doAppendEntriesTo(peerAddr)
     curr := atomic.AddInt32(count, 1)
     log.Printf("curr = %v", curr)
     // 交换半数以上心跳则将结果回传

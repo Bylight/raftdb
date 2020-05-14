@@ -59,6 +59,9 @@ func (rf *Raft) GetState() (currTerm int64, state State) {
 func (rf *Raft) GetIsLeader() bool {
     rf.mu.Lock()
     defer rf.mu.Unlock()
+    if rf.state != Leader {
+        return false
+    }
     // 交换心跳，保证节点信息是最新的
     return rf.swapHeartbeat() && rf.state == Leader
 }
