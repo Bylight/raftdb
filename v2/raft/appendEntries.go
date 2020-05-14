@@ -274,17 +274,23 @@ func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool
         // 重置选举 timer
         rf.electionTimer.Reset(getRandElectionTimeout())
         rf.saveState()
+        handleHeartbeatRes(count, resCh)
         return
     }
     // 处理回调结果
     // rf Term 与 args Term 不一致，说明是过期的 reply
     if rf.currTerm != args.Term || rf.state != Leader {
+        handleHeartbeatRes(count, resCh)
         return
     }
     // 维护 log consistency
     rf.maintainLogConsistency(peerAddr, args, reply)
 
     // 心跳结果回调
+    handleHeartbeatRes(count, resCh)
+}
+
+func handleHeartbeatRes(count *int32, resCh chan bool) {
     curr := atomic.AddInt32(count, 1)
     log.Printf("curr = %v", curr)
     // 交换半数以上心跳则将结果回传
