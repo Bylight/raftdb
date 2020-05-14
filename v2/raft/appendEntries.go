@@ -286,9 +286,9 @@ func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool
 
     // 心跳结果回调
     curr := atomic.AddInt32(count, 1)
-    DPrintf("curr = %v", curr)
+    log.Printf("curr = %v", curr)
     // 交换半数以上心跳则将结果回传
-    if int(curr) == len(rf.peers) / 2 + 1 {
+    if int(curr) == len(rf.peers) / 2 {
         resCh <- true
     }
 }
