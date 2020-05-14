@@ -26,7 +26,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetRe
         return reply, err
     }
     dbs.doOperation(&op)
-    DPrintf("[RecOpResInServer] op %v, err %v", &op, op.Err)
+    DPrintf("[RecOpResInServer] op %v", &op)
     // 先检测是否是因为操作过时而没有执行
     if  op.Err == DupReadOnlyOp {
         reply.Duplicated = true
@@ -75,7 +75,7 @@ func (dbs *DBServer) Put(ctx context.Context, args *dbRPC.PutArgs) (*dbRPC.PutRe
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
         if !isSameOp(op, res) {
             return reply, err
         }
@@ -121,7 +121,7 @@ func (dbs *DBServer) Delete(ctx context.Context, args *dbRPC.DeleteArgs) (*dbRPC
         dbs.mu.Lock()
         delete(dbs.agreeChMap, index)
         dbs.mu.Unlock()
-        DPrintf("[RecOpResInServer] op %v, isSameOp %v, err %v", &res, isSameOp(op, res), res.Err)
+        DPrintf("[RecOpResInServer] op %v, isSameOp %v", &res, isSameOp(op, res))
         if !isSameOp(op, res) {
             return reply, err
         }
@@ -141,6 +141,7 @@ func (dbs *DBServer) Close(ctx context.Context, args *dbRPC.CloseArgs) (*dbRPC.C
     var err error
     reply := new(dbRPC.CloseReply)
 
+    DPrintf("[CloseClient] cid %v", args.Cid)
     // 休眠五个 rpc 超时时间, 保证命令执行完
     time.Sleep(5 * RpcCallTimeout)
 

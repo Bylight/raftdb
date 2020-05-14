@@ -3,8 +3,8 @@ package config
 import (
     "fmt"
     "github.com/Bylight/raftdb/v2/dbRPC"
-    "github.com/Bylight/raftdb/v2/raft"
     "github.com/Bylight/raftdb/v2/dbserver"
+    "github.com/Bylight/raftdb/v2/raft"
     "google.golang.org/grpc"
     "log"
     "net"
@@ -30,6 +30,14 @@ type DefaultConfig struct {
 type ConfigDb struct {
     Db        dbserver.Store
     StoreFile string
+}
+
+func GetDefaultConfigByDefault(me string, addrs []string) *DefaultConfig{
+    addr := PeerAddr{
+        Me:         me,
+        ClientAddr: addrs,
+    }
+    return GetDefaultConfig(addr)
 }
 
 func GetDefaultConfig(addr PeerAddr) *DefaultConfig {

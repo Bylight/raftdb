@@ -27,6 +27,14 @@ type safeCurrLeader struct {
     currLeader int
 }
 
+func GetDefaultClientByDefault(me string, addrs []string) *DefaultClient {
+    addr := config.PeerAddr{
+        Me:         me,
+        ClientAddr: addrs,
+    }
+    return GetDefaultClient(addr)
+}
+
 // 供外部接口调用, 返回一个可用的 DefaultClient
 func GetDefaultClient(addr config.PeerAddr) *DefaultClient {
     client := new(DefaultClient)
