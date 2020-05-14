@@ -58,12 +58,17 @@ func (rf *Raft) GetState() (currTerm int64, state State) {
 
 func (rf *Raft) GetIsLeader() bool {
     rf.mu.Lock()
-    defer rf.mu.Unlock()
     if rf.state != Leader {
         return false
     }
+    rf.mu.Unlock()
+
+    hasHeartbeat := rf.swapHeartbeat()
+
+    rf.mu.Lock()
+    defer rf.mu.Unlock()
     // 交换心跳，保证节点信息是最新的
-    return rf.swapHeartbeat() && rf.state == Leader
+    return hasHeartbeat && rf.state == Leader
 }
 
 // 尝试令当前节点接受一个来自 Client 的 cmd

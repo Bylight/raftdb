@@ -216,8 +216,8 @@ func (rf *Raft) maintainLogConsistency(peerIndex string, args *AppendEntriesArgs
 
 // 判断 Leader 时, 由自认为是 Leader 的节点调用
 // 与节点中的大多数节点交换心跳，保证 Leader 是最新的
-// 由调用者加锁
 func (rf *Raft) swapHeartbeat() bool {
+    rf.mu.Lock()
     var count int32
     resCh := make(chan bool)
     for i := range rf.peers {
@@ -229,6 +229,8 @@ func (rf *Raft) swapHeartbeat() bool {
         // 具体处理逻辑
         go rf.swapHeartbeatWith(i, &count, resCh, len(rf.peers) / 2)
     }
+    rf.mu.Unlock()
+    // 这里不能阻塞
     // 设置阻塞超时时间
     select {
     case <-time.After(5000 * time.Millisecond):
