@@ -67,6 +67,7 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
+        debugPrintf("Get reply %v", &reply)
         // 没有执行则直接重新发送
         if reply.Duplicated {
             // 重新初始化序列号
