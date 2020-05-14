@@ -32,7 +32,7 @@ type ConfigDb struct {
     StoreFile string
 }
 
-func GetDefaultConfigByDefault(me string, addrs []string) *DefaultConfig{
+func GetConfig(me string, addrs []string) *DefaultConfig{
     addr := PeerAddr{
         Me:         me,
         ClientAddr: addrs,

@@ -6,7 +6,7 @@ import (
     "log"
 )
 
-var Debug = false
+const Debug = false
 
 func (client *DefaultClient) getDBClient(target string) (dbRPC.RaftDBServiceClient, error) {
     res, ok := client.servers[target]
@@ -14,10 +14,6 @@ func (client *DefaultClient) getDBClient(target string) (dbRPC.RaftDBServiceClie
         return nil, fmt.Errorf("no connection to raftdb is available: %s", target)
     }
     return *res, nil
-}
-
-func (client *DefaultClient) SetDebug(debug bool) {
-    Debug = debug
 }
 
 func (leaderCount *safeCurrLeader) safeGet() int {

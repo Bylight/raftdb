@@ -27,7 +27,7 @@ type safeCurrLeader struct {
     currLeader int
 }
 
-func GetDefaultClientByDefault(me string, addrs []string) *DefaultClient {
+func GetClient(me string, addrs []string) *DefaultClient {
     addr := config.PeerAddr{
         Me:         me,
         ClientAddr: addrs,
@@ -67,20 +67,21 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
-        // 没有执行则直接重新发送
-        if reply.Duplicated {
-            // 重新初始化序列号
-            curSeq = atomic.AddInt64(&client.seq, 1)
-            continue
-        }
         count++
         if err != nil {
-            log.Printf("[ErrGetInClient] addr %v, err %v", client.serverAddr[currLeader], err)
+            debugPrintf("[ErrGetInClient] addr %v, err %v", client.serverAddr[currLeader], err)
             if count < len(client.servers) {
                 currLeader = (currLeader + 1) % len(client.servers)
                 continue
             }
             return nil, err
+        }
+        // 没有执行则直接重新发送
+        if reply.Duplicated {
+            count--
+            // 重新初始化序列号
+            curSeq = atomic.AddInt64(&client.seq, 1)
+            continue
         }
         // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
@@ -116,7 +117,7 @@ func (client *DefaultClient) Put(key, value []byte) error {
         reply, err := server.Put(context.Background(), args)
         count++
         if err != nil {
-            log.Printf("[ErrPutInClient] addr %v, err %v", client.serverAddr[currLeader], err)
+            debugPrintf("[ErrPutInClient] addr %v, err %v", client.serverAddr[currLeader], err)
             if count < len(client.servers) {
                 currLeader = (currLeader + 1) % len(client.servers)
                 continue
@@ -155,7 +156,7 @@ func (client *DefaultClient) Delete(key []byte) error {
         reply, err := server.Delete(context.Background(), args)
         count++
         if err != nil {
-            log.Printf("[ErrDeleteInClient] addr %v, err %v", client.serverAddr[currLeader], err)
+            debugPrintf("[ErrDeleteInClient] addr %v, err %v", client.serverAddr[currLeader], err)
             if count < len(client.servers) {
                 currLeader = (currLeader + 1) % len(client.servers)
                 continue
@@ -207,5 +208,5 @@ func (client *DefaultClient) initRaftDBClients(servers []string) {
     }
     client.servers = clients
     client.serverConns = conns
-    log.Println("[InitInClient] init raftDB dbclient")
+    debugPrintf("[InitInClient] init raftDB dbclient")
 }

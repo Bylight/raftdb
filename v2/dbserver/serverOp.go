@@ -27,14 +27,14 @@ func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetRe
     }
     dbs.doOperation(&op)
     DPrintf("[RecOpResInServer] op %v", &op)
-    // 先检测是否是因为操作过时而没有执行
-    if  op.Err == DupReadOnlyOp {
-        reply.Duplicated = true
-        return reply, err
-    }
     // 错误要报告给 dbclient
     if op.Err != "" {
         err = errors.New(op.Err)
+    }
+    // 检测是否是因为操作过时而没有执行
+    if  op.Err == DupReadOnlyOp {
+        reply.Duplicated = true
+        return reply, err
     }
     reply.Value = op.Value
     // 只有 WrongLeader 为 false, dbclient 才接受这个结果
