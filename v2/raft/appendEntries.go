@@ -304,9 +304,10 @@ func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool
 
 func handleHeartbeatRes(count *int32, resCh chan bool, needLen int) {
     curr := atomic.AddInt32(count, 1)
-    log.Printf("curr = %v", curr)
+    log.Printf("curr = %v, needLen = %v", curr, needLen)
     // 交换半数以上心跳则将结果回传
     if int(curr) == needLen {
+        log.Printf("[ReCall]curr = %v, needLen = %v", curr, needLen)
         resCh <- true
     }
 }
