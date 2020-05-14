@@ -39,6 +39,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetRe
     reply.Value = op.Value
     // 只有 WrongLeader 为 false, dbclient 才接受这个结果
     reply.WrongLeader = false
+    DPrintf("Get reply.Duplicated %v", reply.Duplicated)
     return reply, err
 }
 
