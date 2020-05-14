@@ -3,6 +3,8 @@ package raft
 import (
     "context"
     "log"
+    "sync/atomic"
+    "time"
 )
 
 // raft dbserver 响应 AppendEntries RPC
@@ -209,5 +211,83 @@ func (rf *Raft) maintainLogConsistency(peerIndex string, args *AppendEntriesArgs
                 }
             }
         }
+    }
+}
+
+// 判断 Leader 时, 由自认为是 Leader 的节点调用
+// 与节点中的大多数节点交换心跳，保证 Leader 是最新的
+// 由调用者加锁
+func (rf *Raft) swapHeartbeat() bool {
+    var count int32 = 0
+    resCh := make(chan bool)
+    for i := range rf.peers {
+        if i == rf.me {
+            rf.nextIndex[i] = rf.getRealLogLen()
+            rf.matchIndex[i] = rf.getRealLogLen() - 1
+            continue
+        }
+        // 具体处理逻辑
+        go rf.swapHeartbeatWith(i, &count, resCh)
+    }
+    // 设置阻塞超时时间
+    select {
+    case <-time.After(5000 * time.Millisecond):
+        return false
+    case <-resCh:
+        return true
+    }
+}
+
+// 只发送心跳请求, 即 entries 为空的 AppendEntriesArgs
+func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool) {
+    rf.mu.Lock()
+    if rf.state != Leader {
+        rf.mu.Unlock()
+        return
+    }
+    args := new(AppendEntriesArgs)
+    args.Term = rf.currTerm
+    args.LeaderId = rf.me
+    args.LeaderCommitIndex = rf.commitIndex
+    // 每个节点有不同的数据
+    args.PrevLogIndex = rf.nextIndex[peerAddr] - 1
+    args.PrevLogTerm = rf.logs[rf.getCurrIndex(args.PrevLogIndex)].Term
+    reply := new(AppendEntriesReply)
+    // 只发送 Heartbeat
+    args.Entries = []*LogEntry{}
+    DPrintf("[SendHeartbeat]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
+    rf.mu.Unlock()
+
+    // 进行 RPC 调用
+    err := rf.sendAppendEntries(peerAddr, context.Background(), args, reply)
+    if err != nil {
+        log.Println(err)
+    }
+
+    rf.mu.Lock()
+    defer rf.mu.Unlock()
+    // fail because of out-dated term
+    // 收到更大的 Term，Leader 退位
+    if reply.Term > rf.currTerm {
+        rf.currTerm = reply.Term
+        rf.changeStateTo(Follower)
+        // 重置选举 timer
+        rf.electionTimer.Reset(getRandElectionTimeout())
+        rf.saveState()
+        return
+    }
+    // 处理回调结果
+    // rf Term 与 args Term 不一致，说明是过期的 reply
+    if rf.currTerm != args.Term || rf.state != Leader {
+        return
+    }
+    // 维护 log consistency
+    rf.maintainLogConsistency(peerAddr, args, reply)
+
+    // 心跳结果回调
+    curr := atomic.AddInt32(count, 1)
+    // 交换半数以上心跳则将结果回传
+    if int(curr) == len(rf.peers) / 2 + 1 {
+        resCh <- true
     }
 }

@@ -14,24 +14,19 @@ func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetRe
     // Get 请求是幂等的, 可以重复, 不需要记录 cid; 更新: 但是如果不保证 get 操作的线性执行, 会读到旧的结果
     op := dbRPC.Op{
         Key:  args.Key,
-        Seq:  args.Seq,
         Type: dbRPC.Op_GET,
         Cid:  args.Cid,
         Err:  "",
     }
     reply.WrongLeader = true
-    reply.Duplicated = false
     // Leader 才能保证数据是最新的
     if isLeader := dbs.rf.GetIsLeader() ;!isLeader {
         return reply, err
     }
+    // Get 操作应该立即执行
     dbs.doOperation(&op)
     DPrintf("[RecOpResInServer] op %v", &op)
-    // 先检测是否是因为操作过时而没有执行，重复的请求不应属于错误
-    if  op.Err == DupReadOnlyOp {
-        reply.Duplicated = true
-        return reply, err
-    }
+    // 不应检测是否重复
     // 错误要报告给 dbclient
     if op.Err != "" {
         err = errors.New(op.Err)

@@ -51,7 +51,6 @@ func GetDefaultClient(addr config.PeerAddr) *DefaultClient {
 // 对于不存在的 key, Get 会返回一个空的 value 和一个 not found 的错误
 func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     debugPrintf("[Client:Get] key: %s", key)
-    curSeq := atomic.AddInt64(&client.seq, 1)
     // 使用 for 循环实现重发 RPC, 保证 RPC 的有效
     // 即使出错, 也要尝试遍历各个节点, 这样节点意外宕机时才能保证系统可用
     count := 0
@@ -59,7 +58,6 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
     for {
         args := &dbRPC.GetArgs{
             Key: key,
-            Seq: curSeq,
             Cid: client.cid,
         }
         server, err := client.getDBClient(client.serverAddr[currLeader])
@@ -75,13 +73,6 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
                 continue
             }
             return nil, err
-        }
-        // 没有执行则直接重新发送
-        if reply.Duplicated {
-            count--
-            // 重新初始化序列号
-            curSeq = atomic.AddInt64(&client.seq, 1)
-            continue
         }
         // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader

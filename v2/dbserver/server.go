@@ -146,8 +146,8 @@ func (dbs *DBServer) doOperation(op *dbRPC.Op) {
     dbs.mu.Lock()
     defer dbs.mu.Unlock()
     var err error
-    // 只处理最新的请求
-    if !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
+    // 幂等的请求可以直接执行
+    if op.Type == dbRPC.Op_GET || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
         switch op.Type {
         case dbRPC.Op_GET:
             op.Value, err = dbs.db.Get(op.Key)
@@ -156,9 +156,12 @@ func (dbs *DBServer) doOperation(op *dbRPC.Op) {
         case dbRPC.Op_DELETE:
             err = dbs.db.Delete(op.Key)
         }
-        dbs.cid2seq[op.Cid] = op.Seq
-        // 每次操作完，count++
-        dbs.snapshotCount++
+        // 只有非幂等的操作才需要记录
+        if op.Type != dbRPC.Op_GET {
+            dbs.cid2seq[op.Cid] = op.Seq
+            // 每次操作完，count++
+            dbs.snapshotCount++
+        }
 
         if err != nil {
             DPrintf("[FailedOpErr] op %v, err %v", op, err)
@@ -166,9 +169,6 @@ func (dbs *DBServer) doOperation(op *dbRPC.Op) {
         } else {
             DPrintf("[OpDoneInServer] type %s, key %s, value %s", op.Type, op.Key, op.Value)
         }
-    // 重复的只读请求, 仅需重新执行
-    } else if op.Type == dbRPC.Op_GET {
-        op.Err = DupReadOnlyOp
     }
 }
 
