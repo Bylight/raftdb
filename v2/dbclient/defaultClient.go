@@ -67,14 +67,6 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
             return nil, err
         }
         reply, err := server.Get(context.Background(), args)
-        debugPrintf("Get reply.Value %v", reply.Value)
-        debugPrintf("Get reply.Duplicated %v", reply.Duplicated)
-        // 没有执行则直接重新发送
-        if reply.Duplicated {
-            // 重新初始化序列号
-            curSeq = atomic.AddInt64(&client.seq, 1)
-            continue
-        }
         count++
         if err != nil {
             log.Printf("[ErrGetInClient] addr %v, err %v", client.serverAddr[currLeader], err)
@@ -83,6 +75,14 @@ func (client *DefaultClient) Get(key []byte) (value []byte, err error) {
                 continue
             }
             return nil, err
+        }
+        // 没有执行则直接重新发送
+        if reply.Duplicated {
+            // 重新发送时要维持轮询数
+            count--
+            // 重新初始化序列号
+            curSeq = atomic.AddInt64(&client.seq, 1)
+            continue
         }
         // dbclient 只能向 leader 发送请求
         // 这里采用轮询方式选择 leader
