@@ -240,7 +240,69 @@ func (rf *Raft) swapHeartbeat() bool {
 
 // 只发送心跳请求, 即 entries 为空的 AppendEntriesArgs
 func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool, needLen int) {
-    rf.doAppendEntriesTo(peerAddr)
+    rf.mu.Lock()
+    if rf.state != Leader {
+        rf.mu.Unlock()
+        return
+    }
+    // 可能需要发送 snapshot
+    if rf.nextIndex[peerAddr] <= rf.lastIncludedIndex {
+        rf.doInstallSnapshotTo(peerAddr)
+        return
+    }
+    args := new(AppendEntriesArgs)
+    args.Term = rf.currTerm
+    args.LeaderId = rf.me
+    args.LeaderCommitIndex = rf.commitIndex
+    // 每个节点有不同的数据
+    args.PrevLogIndex = rf.nextIndex[peerAddr] - 1
+    args.PrevLogTerm = rf.logs[rf.getCurrIndex(args.PrevLogIndex)].Term
+    reply := new(AppendEntriesReply)
+    // 由 nextIndex 和 matchIndex 判断是发送 Heartbeat 还是具体的 AppendEntries
+    // 处理 AppendEntriesArgs 中的 Entries
+    if args.PrevLogIndex != rf.matchIndex[peerAddr] || rf.nextIndex[peerAddr] >= rf.getRealLogLen() {
+        args.Entries = []*LogEntry{}
+    } else {
+        args.Entries = rf.logs[rf.getCurrIndex(rf.nextIndex[peerAddr]):]
+    }
+    if len(args.Entries) > 0 {
+        DPrintf("[SendAppendEntries]%v[%v] to %v, args.PrevLogIndex %v, len(args.Entries) %v", rf.me, rf.currTerm, peerAddr, args.PrevLogIndex, len(args.Entries))
+    } else {
+        DPrintf("[SendHeartbeat]%v[%v] to %v", rf.me, rf.currTerm, peerAddr)
+    }
+    rf.mu.Unlock()
+
+    // 进行 RPC 调用
+    err := rf.sendAppendEntries(peerAddr, context.Background(), args, reply)
+    if err != nil {
+        log.Println(err)
+    }
+
+    rf.mu.Lock()
+    defer rf.mu.Unlock()
+    // fail because of out-dated term
+    // 收到更大的 Term，Leader 退位
+    if reply.Term > rf.currTerm {
+        rf.currTerm = reply.Term
+        rf.changeStateTo(Follower)
+        // 重置选举 timer
+        rf.electionTimer.Reset(getRandElectionTimeout())
+        rf.saveState()
+        handleHeartbeatRes(count, resCh, needLen)
+        return
+    }
+    // 处理回调结果
+    // rf Term 与 args Term 不一致，说明是过期的 reply
+    if rf.currTerm != args.Term || rf.state != Leader {
+        handleHeartbeatRes(count, resCh, needLen)
+        return
+    }
+    // 维护 log consistency
+    rf.maintainLogConsistency(peerAddr, args, reply)
+    handleHeartbeatRes(count, resCh, needLen)
+}
+
+func handleHeartbeatRes(count *int32, resCh chan bool, needLen int) {
     curr := atomic.AddInt32(count, 1)
     log.Printf("curr = %v", curr)
     // 交换半数以上心跳则将结果回传
