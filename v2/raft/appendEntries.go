@@ -218,7 +218,7 @@ func (rf *Raft) maintainLogConsistency(peerIndex string, args *AppendEntriesArgs
 // 与节点中的大多数节点交换心跳，保证 Leader 是最新的
 // 由调用者加锁
 func (rf *Raft) swapHeartbeat() bool {
-    var count int32 = 0
+    var count int32
     resCh := make(chan bool)
     for i := range rf.peers {
         if i == rf.me {
@@ -286,6 +286,7 @@ func (rf *Raft) swapHeartbeatWith(peerAddr string, count *int32, resCh chan bool
 
     // 心跳结果回调
     curr := atomic.AddInt32(count, 1)
+    DPrintf("curr = %v", curr)
     // 交换半数以上心跳则将结果回传
     if int(curr) == len(rf.peers) / 2 + 1 {
         resCh <- true

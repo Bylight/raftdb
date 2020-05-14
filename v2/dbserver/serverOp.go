@@ -19,6 +19,7 @@ func (dbs *DBServer) Get(ctx context.Context, args *dbRPC.GetArgs) (*dbRPC.GetRe
         Err:  "",
     }
     reply.WrongLeader = true
+    DPrintf("[RecOpFromClient] op %v", &op)
     // Leader 才能保证数据是最新的
     if isLeader := dbs.rf.GetIsLeader() ;!isLeader {
         return reply, err
