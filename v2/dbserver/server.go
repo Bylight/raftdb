@@ -147,7 +147,8 @@ func (dbs *DBServer) doOperation(op *dbRPC.Op) {
     defer dbs.mu.Unlock()
     var err error
     // 幂等的请求可以直接执行
-    if op.Type == dbRPC.Op_GET || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
+    if (op.Type != dbRPC.Op_PUT && op.Type != dbRPC.Op_DELETE) || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
+    // if op.Type == dbRPC.Op_GET || !dbs.isDuplicatedCmd(op.Cid, op.Seq) {
         switch op.Type {
         case dbRPC.Op_GET:
             op.Value, err = dbs.db.Get(op.Key)
@@ -157,7 +158,8 @@ func (dbs *DBServer) doOperation(op *dbRPC.Op) {
             err = dbs.db.Delete(op.Key)
         }
         // 只有非幂等的操作才需要记录
-        if op.Type != dbRPC.Op_GET {
+        if op.Type == dbRPC.Op_PUT || op.Type == dbRPC.Op_DELETE {
+        // if op.Type != dbRPC.Op_GET {
             dbs.cid2seq[op.Cid] = op.Seq
             // 每次操作完，count++
             dbs.snapshotCount++
