@@ -59,6 +59,7 @@ func (rf *Raft) GetState() (currTerm int64, state State) {
 func (rf *Raft) GetIsLeader() bool {
     rf.mu.Lock()
     if rf.state != Leader {
+        rf.mu.Unlock()
         return false
     }
     rf.mu.Unlock()
