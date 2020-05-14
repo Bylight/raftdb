@@ -27,14 +27,12 @@ message CloseReply {
 
 message GetArgs {
   bytes key = 1;
-  int64 seq = 2;
   string cid = 3;
 }
 
 message GetReply {
   bytes value = 1;
   bool wrong_leader = 2;
-  bool duplicated = 3;
 }
 
 message PutArgs {
