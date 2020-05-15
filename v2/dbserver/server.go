@@ -81,6 +81,7 @@ func (dbs *DBServer) waitApply() {
 
 // dbserver 根据来自 Raft 的 cmd 对数据库发起操作请求
 func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
+    DPrintf("[CmdFromRaft] cmd %v", msg.Cmd)
     // 令 Leader 快速确定 commitIndex
     if msg.Cmd == nil {
         return
