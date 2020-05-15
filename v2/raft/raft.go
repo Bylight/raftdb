@@ -225,15 +225,12 @@ func (rf *Raft) changeStateTo(targetState State) {
     }
 }
 
+// 由调用者加锁
 func (rf *Raft) beLeader() {
     DPrintf("[BeLeader] peer %v[%v]", rf.me, rf.currTerm)
     rf.doAppendEntries()
     rf.heartbeatTimer.Reset(HeartbeatRPCTimeout * time.Millisecond)
-    // 初始化 Volatile State on Leader
-    for i := range rf.peers {
-        rf.nextIndex[i] = rf.getRealLogLen()
-        rf.matchIndex[i] = 0
-    }
+
     // 用于为当前 Leader 快速确定 commitIndex
     entry := &LogEntry{
         Term: rf.currTerm,
@@ -241,6 +238,12 @@ func (rf *Raft) beLeader() {
     }
     rf.logs = append(rf.logs, entry)
     rf.saveState()
+
+    // 初始化 Volatile State on Leader
+    for i := range rf.peers {
+        rf.nextIndex[i] = rf.getRealLogLen()
+        rf.matchIndex[i] = 0
+    }
 }
 
 func (rf *Raft) Kill() {
