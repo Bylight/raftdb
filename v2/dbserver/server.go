@@ -11,7 +11,7 @@ import (
 )
 
 const RpcCallTimeout = 5000
-const DupReadOnlyOp = "DupReadOnlyOp"
+// const DupReadOnlyOp = "DupReadOnlyOp"
 const Debug = true
 
 // dbserver 作为 raftdb 中与 dbclient 进行直接交互的存在，属于一个“中间层”的存在
@@ -81,14 +81,14 @@ func (dbs *DBServer) waitApply() {
 
 // dbserver 根据来自 Raft 的 cmd 对数据库发起操作请求
 func (dbs *DBServer) opBaseCmd(msg raft.ApplyMsg) {
-    DPrintf("[CmdFromRaft] cmd %v", msg.Cmd)
-    // 令 Leader 快速确定 commitIndex
-    if msg.Cmd == nil {
-        return
-    }
     bts, ok := msg.Cmd.([]byte)
     if !ok {
         log.Printf("[ErrorCmdTypeInServer] dbserver %v receive illeagl type cmd: %v from raft, should recive []byte", dbs.me, msg.Cmd)
+        return
+    }
+    // 令 Leader 快速确定 commitIndex
+    if bts == nil || len(bts) < 1 { // empty data
+        // return op, errors.New("[DecodeOpErrorInServer] decode nil data")
         return
     }
     op, err := decodeOp(bts)

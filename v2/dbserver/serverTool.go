@@ -3,7 +3,6 @@ package dbserver
 import (
     "bytes"
     "encoding/gob"
-    "errors"
     "github.com/Bylight/raftdb/v2/dbRPC"
     "log"
     "math/rand"
@@ -111,9 +110,9 @@ func encodeOp(op dbRPC.Op) ([]byte, error) {
 // 将 byte 数组解码为 op
 func decodeOp(data []byte) (dbRPC.Op, error) {
     var op dbRPC.Op
-    if data == nil || len(data) < 1 { // empty data
-        return op, errors.New("[DecodeOpErrorInServer] decode nil data")
-    }
+    // if data == nil || len(data) < 1 { // empty data
+    //     return op, errors.New("[DecodeOpErrorInServer] decode nil data")
+    // }
     r := bytes.NewBuffer(data)
     dec := gob.NewDecoder(r)
     err := dec.Decode(&op)
