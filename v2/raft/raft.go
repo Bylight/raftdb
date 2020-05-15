@@ -234,6 +234,13 @@ func (rf *Raft) beLeader() {
         rf.nextIndex[i] = rf.getRealLogLen()
         rf.matchIndex[i] = 0
     }
+    // 用于为当前 Leader 快速确定 commitIndex
+    entry := &LogEntry{
+        Term: rf.currTerm,
+        Cmd:  nil,
+    }
+    rf.logs = append(rf.logs, entry)
+    rf.saveState()
 }
 
 func (rf *Raft) Kill() {
