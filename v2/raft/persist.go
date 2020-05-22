@@ -2,6 +2,8 @@ package raft
 
 import "sync"
 
+const PersistFile = "persist"
+
 type Persist struct {
     mu        sync.Mutex
     raftState []byte // 保存节点的持久化状态
@@ -16,11 +18,14 @@ func (ps *Persist) SaveRaftState(state []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
     ps.raftState = state
+    WriteFile(PersistFile, state)
 }
 
 func (ps *Persist) ReadRaftState() []byte {
     ps.mu.Lock()
     defer ps.mu.Unlock()
+    state := ReadFile(PersistFile)
+    ps.raftState = state
     return ps.raftState
 }
 
@@ -36,6 +41,7 @@ func (ps *Persist) SaveStateAndSnapshot(state []byte, snapshot []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
     ps.raftState = state
+    WriteFile(PersistFile, state)
     ps.snapshot = snapshot
 }
 

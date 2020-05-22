@@ -4,6 +4,7 @@ import (
     "bytes"
     "encoding/gob"
     "fmt"
+    "io/ioutil"
     "log"
     "math/rand"
     "sort"
@@ -139,4 +140,19 @@ func (x *RequestVoteReply) CopyToRaft(y *RequestVoteReply) {
 
 func (x *InstallSnapshotReply) CopyToRaft(y *InstallSnapshotReply) {
     y.Term = x.Term
+}
+
+func WriteFile(file string, content []byte) {
+    err := ioutil.WriteFile(file, content, 0644)
+    if err != nil {
+        log.Fatalf("[ErrInWriteFile]: %v", err)
+    }
+}
+
+func ReadFile(file string) []byte {
+    content, err := ioutil.ReadFile(file)
+    if err != nil {
+        log.Fatalf("[ErrInReadFile]: %v", err)
+    }
+    return content
 }
