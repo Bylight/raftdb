@@ -5,7 +5,7 @@ import (
     "sync"
 )
 
-const PersistFile = "persist"
+const StateFile = "RaftState"
 
 type Persist struct {
     mu        sync.Mutex
@@ -14,13 +14,18 @@ type Persist struct {
 }
 
 func MakePersist() *Persist {
+    // raftState 文件
+    err := WriteFile(StateFile, []byte(""))
+    if err != nil {
+        panic(err)
+    }
     return &Persist{}
 }
 
 func (ps *Persist) SaveRaftState(state []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
-    err := WriteFile(PersistFile, state)
+    err := WriteFile(StateFile, state)
     if err != nil {
         log.Fatalf("[ErrInSaveRaftState] err %v", err)
         return
@@ -31,7 +36,7 @@ func (ps *Persist) SaveRaftState(state []byte) {
 func (ps *Persist) ReadRaftState() []byte {
     ps.mu.Lock()
     defer ps.mu.Unlock()
-    state, err := ReadFile(PersistFile)
+    state, err := ReadFile(StateFile)
     if err != nil {
         log.Fatalf("[ErrInReadRaftState] err %v", err)
         return nil
@@ -52,7 +57,7 @@ func (ps *Persist) SaveStateAndSnapshot(state []byte, snapshot []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
     ps.raftState = state
-    err := WriteFile(PersistFile, state)
+    err := WriteFile(StateFile, state)
     if err != nil {
         log.Fatalf("[ErrInSaveRaftState] err %v", err)
         return
