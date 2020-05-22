@@ -40,8 +40,7 @@ func GetDefaultClient(addr config.PeerAddr) *DefaultClient {
     client := new(DefaultClient)
     client.serverAddr = addr.ClientAddr
     client.leader = &safeCurrLeader{currLeader: 0}
-    // 问题: Client 断开重连后，如何保证生成一样的 id, 或是说保持 seq 最新?
-    // 当前解决方式, 令 Client 的 id 带上时间戳, 但这种情况下, raftdb 需要定时重启, 防止 cid2seq 占用过多内存
+    // 令 Client 的 id 带上时间戳, 可以保证断开重连的 Client 也能维持序列号最新 (否则可能和断开连接之前冲突)
     client.cid = addr.Me + config.DefaultDbServicePort + fmt.Sprint(time.Now().Unix())
     client.initRaftDBClients(addr.ClientAddr)
     return client

@@ -2,6 +2,7 @@ package raft
 
 import (
     "log"
+    "os"
     "sync"
 )
 
@@ -14,11 +15,17 @@ type Persist struct {
 }
 
 func MakePersist() *Persist {
-    // raftState 文件
-    err := WriteFile(StateFile, []byte(""))
+    // 不存在则创建 raftState 文件
+    _, err := os.Stat(StateFile)
     if err != nil {
-        panic(err)
+        if !os.IsNotExist(err) {
+            // 该函数仅用于初始化，IO错误应直接中断
+            panic(err)
+        } else if _, err = os.Create(StateFile); err != nil {
+            panic(err)
+        }
     }
+
     return &Persist{}
 }
 
