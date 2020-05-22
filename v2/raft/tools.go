@@ -142,17 +142,19 @@ func (x *InstallSnapshotReply) CopyToRaft(y *InstallSnapshotReply) {
     y.Term = x.Term
 }
 
-func WriteFile(file string, content []byte) {
+func WriteFile(file string, content []byte) error {
     err := ioutil.WriteFile(file, content, 0644)
     if err != nil {
         log.Fatalf("[ErrInWriteFile]: %v", err)
     }
+    return err
 }
 
-func ReadFile(file string) []byte {
+func ReadFile(file string) ([]byte, error) {
     content, err := ioutil.ReadFile(file)
     if err != nil {
         log.Fatalf("[ErrInReadFile]: %v", err)
+        return nil, err
     }
-    return content
+    return content, nil
 }

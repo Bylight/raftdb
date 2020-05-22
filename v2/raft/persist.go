@@ -1,6 +1,9 @@
 package raft
 
-import "sync"
+import (
+    "log"
+    "sync"
+)
 
 const PersistFile = "persist"
 
@@ -17,14 +20,22 @@ func MakePersist() *Persist {
 func (ps *Persist) SaveRaftState(state []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
+    err := WriteFile(PersistFile, state)
+    if err != nil {
+        log.Fatalf("[ErrInSaveRaftState] err %v", err)
+        return
+    }
     ps.raftState = state
-    WriteFile(PersistFile, state)
 }
 
 func (ps *Persist) ReadRaftState() []byte {
     ps.mu.Lock()
     defer ps.mu.Unlock()
-    state := ReadFile(PersistFile)
+    state, err := ReadFile(PersistFile)
+    if err != nil {
+        log.Fatalf("[ErrInReadRaftState] err %v", err)
+        return nil
+    }
     ps.raftState = state
     return ps.raftState
 }
@@ -41,7 +52,12 @@ func (ps *Persist) SaveStateAndSnapshot(state []byte, snapshot []byte) {
     ps.mu.Lock()
     defer ps.mu.Unlock()
     ps.raftState = state
-    WriteFile(PersistFile, state)
+    err := WriteFile(PersistFile, state)
+    if err != nil {
+        log.Fatalf("[ErrInSaveRaftState] err %v", err)
+        return
+    }
+    ps.raftState = state
     ps.snapshot = snapshot
 }
 
